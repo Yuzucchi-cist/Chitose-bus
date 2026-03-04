@@ -1,0 +1,22 @@
+# Flutter
+flutter_app/.dart_tool/
+flutter_app/.flutter-plugins
+flutter_app/.flutter-plugins-dependencies
+flutter_app/build/
+flutter_app/**/*.freezed.dart
+flutter_app/**/*.g.dart
+
+# Dart defines（シークレット含む実行時設定）
+.dart_defines
+
+# GAS / clasp
+.clasp.json
+gas/.clasp.json
+
+# 環境変数ファイル
+.env
+.env.local
+
+# General
+.DS_Store
+Thumbs.db
