@@ -1,0 +1,14 @@
+{
+  "project": "ios",
+  "platform": "ios",
+  "github": {
+    "owner": "Yuzucchi-cist",
+    "repo": "Chitose-bus"
+  },
+  "ios": {},
+  "flutter": {
+    "watch": {}
+  },
+  "reactNative": {},
+  "mobai": {}
+}
