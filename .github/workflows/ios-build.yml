@@ -80,7 +80,10 @@ jobs:
 
       - name: Flutter pub get
         if: steps.detect.outputs.type == 'flutter'
-        run: flutter pub get
+        run: |
+          FLUTTER_ROOT=$(dirname "${{ inputs.ios_path }}")
+          cd "$FLUTTER_ROOT"
+          flutter pub get
 
       - name: Setup Node.js
         if: steps.detect.outputs.type == 'reactnative' || steps.detect.outputs.type == 'expo'
