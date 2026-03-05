@@ -91,6 +91,13 @@ jobs:
           cd "$FLUTTER_ROOT"
           flutter pub get
 
+      - name: Flutter build_runner
+        if: steps.detect.outputs.type == 'flutter'
+        run: |
+          FLUTTER_ROOT=$(dirname "${{ inputs.ios_path }}")
+          cd "$FLUTTER_ROOT"
+          dart run build_runner build --delete-conflicting-outputs
+
       - name: Setup Node.js
         if: steps.detect.outputs.type == 'reactnative' || steps.detect.outputs.type == 'expo'
         uses: actions/setup-node@v4
