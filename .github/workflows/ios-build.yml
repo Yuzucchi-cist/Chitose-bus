@@ -194,15 +194,19 @@ jobs:
 
           if [ "$PROJECT_TYPE" = "flutter" ]; then
             cd ..
-            # Switch to Manual signing so --no-codesign works without a Development Team
-            sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "ios/Runner.xcodeproj/project.pbxproj"
-            if [ "$CONFIGURATION" = "Debug" ]; then
-              echo "Building Flutter iOS Debug..."
-              flutter build ios --debug --no-codesign
-            else
-              echo "Building Flutter iOS Release..."
-              flutter build ios --release --no-codesign
-            fi
+            echo "Building Flutter iOS ($CONFIGURATION) via xcodebuild..."
+            xcodebuild \
+              -workspace "ios/Runner.xcworkspace" \
+              -scheme Runner \
+              -configuration "$CONFIGURATION" \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath "$DERIVED_DATA_PATH" \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_IDENTITY="" \
+              DEVELOPMENT_TEAM="" \
+              COMPILER_INDEX_STORE_ENABLE=NO \
+              -quiet build
             cd "$IOS_PATH"
           elif [ "$PROJECT_TYPE" = "reactnative" ] || [ "$PROJECT_TYPE" = "expo" ]; then
             # Use xcodebuild directly for React Native/Expo
@@ -291,13 +295,7 @@ jobs:
             echo "Created signed IPA: build/$BUILD_ID.ipa"
           else
             # For unsigned builds, find .app and create IPA
-            if [ "$PROJECT_TYPE" = "flutter" ]; then
-              # Flutter outputs to build/ios/iphoneos/
-              APP_PATH=$(find "${GITHUB_WORKSPACE}/build/ios/iphoneos" -name "*.app" -type d | head -1)
-            else
-              # Native and React Native/Expo use DerivedData
-              APP_PATH=$(find "$DERIVED_DATA_PATH/Build/Products/${CONFIGURATION}-iphoneos" -name "*.app" -type d | head -1)
-            fi
+            APP_PATH=$(find "$DERIVED_DATA_PATH/Build/Products/${CONFIGURATION}-iphoneos" -name "*.app" -type d | head -1)
 
             if [ -z "$APP_PATH" ]; then
               echo "Error: Could not find .app"
