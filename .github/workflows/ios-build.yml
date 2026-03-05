@@ -226,7 +226,7 @@ jobs:
               COMPILER_INDEX_STORE_ENABLE=NO \
               ${DART_DEFINES:+DART_DEFINES="$DART_DEFINES"} \
               -quiet build
-            cd "$IOS_PATH"
+            cd "$GITHUB_WORKSPACE/$IOS_PATH"
           elif [ "$PROJECT_TYPE" = "reactnative" ] || [ "$PROJECT_TYPE" = "expo" ]; then
             # Use xcodebuild directly for React Native/Expo
             echo "Building React Native iOS ($CONFIGURATION)..."
