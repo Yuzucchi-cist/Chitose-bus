@@ -19,7 +19,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -70,8 +70,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           labelColor: const Color(0xFF00FF88),
           unselectedLabelColor: const Color(0xFF444444),
           tabs: const [
-            Tab(text: '→ 千歳駅'),
-            Tab(text: '→ 科技大'),
+            Tab(text: '千歳駅'),
+            Tab(text: '南千歳'),
+            Tab(text: '研究棟'),
+            Tab(text: '本部棟'),
           ],
         ),
       ),
@@ -98,16 +100,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         data: (response) => TabBarView(
           controller: _tabController,
           children: [
-            _DirectionTab(
-              timetable: response.current,
-              direction: BusDirection.toStation,
-              updatedAt: response.updatedAt,
-            ),
-            _DirectionTab(
-              timetable: response.current,
-              direction: BusDirection.toUniversity,
-              updatedAt: response.updatedAt,
-            ),
+            _DirectionTab(timetable: response.current, direction: BusDirection.fromChitose, updatedAt: response.updatedAt),
+            _DirectionTab(timetable: response.current, direction: BusDirection.fromMinamiChitose, updatedAt: response.updatedAt),
+            _KenkyutoTab(timetable: response.current, updatedAt: response.updatedAt),
+            _DirectionTab(timetable: response.current, direction: BusDirection.fromHonbuto, updatedAt: response.updatedAt),
           ],
         ),
       ),
@@ -153,32 +149,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('→ 千歳駅',
-                  style: TextStyle(
-                    color: Color(0xFF00FF88),
-                    fontSize: 12,
-                    letterSpacing: 3,
-                  )),
+              const Text('千歳駅発', style: TextStyle(color: Color(0xFF00FF88), fontSize: 12, letterSpacing: 3)),
               const SizedBox(height: 8),
-              ScheduleList(
-                timetable: upcoming,
-                direction: BusDirection.toStation,
-              ),
-              const SizedBox(height: 24),
-              const Text('→ 千歳科技大',
-                  style: TextStyle(
-                    color: Color(0xFF00FF88),
-                    fontSize: 12,
-                    letterSpacing: 3,
-                  )),
+              ScheduleList(timetable: upcoming, direction: BusDirection.fromChitose),
+              const SizedBox(height: 16),
+              const Text('南千歳発', style: TextStyle(color: Color(0xFF00FF88), fontSize: 12, letterSpacing: 3)),
               const SizedBox(height: 8),
-              ScheduleList(
-                timetable: upcoming,
-                direction: BusDirection.toUniversity,
-              ),
+              ScheduleList(timetable: upcoming, direction: BusDirection.fromMinamiChitose),
+              const SizedBox(height: 16),
+              const Text('研究棟発 → 本部棟', style: TextStyle(color: Color(0xFF00FF88), fontSize: 12, letterSpacing: 3)),
+              const SizedBox(height: 8),
+              ScheduleList(timetable: upcoming, direction: BusDirection.fromKenkyutoToHonbuto),
+              const SizedBox(height: 16),
+              const Text('研究棟発 → 千歳駅', style: TextStyle(color: Color(0xFF00FF88), fontSize: 12, letterSpacing: 3)),
+              const SizedBox(height: 8),
+              ScheduleList(timetable: upcoming, direction: BusDirection.fromKenkyutoToStation),
+              const SizedBox(height: 16),
+              const Text('本部棟発', style: TextStyle(color: Color(0xFF00FF88), fontSize: 12, letterSpacing: 3)),
+              const SizedBox(height: 8),
+              ScheduleList(timetable: upcoming, direction: BusDirection.fromHonbuto),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _KenkyutoTab extends StatelessWidget {
+  const _KenkyutoTab({required this.timetable, required this.updatedAt});
+  final BusTimetable timetable;
+  final String updatedAt;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          const Text('NEXT BUS  → 本部棟', style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+          const SizedBox(height: 8),
+          NextBusDisplay(timetable: timetable, direction: BusDirection.fromKenkyutoToHonbuto),
+          const SizedBox(height: 24),
+          const Text("TODAY'S SCHEDULE  → 本部棟", style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+          const SizedBox(height: 8),
+          ScheduleList(timetable: timetable, direction: BusDirection.fromKenkyutoToHonbuto),
+          const SizedBox(height: 32),
+          const Text('NEXT BUS  → 千歳駅', style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+          const SizedBox(height: 8),
+          NextBusDisplay(timetable: timetable, direction: BusDirection.fromKenkyutoToStation),
+          const SizedBox(height: 24),
+          const Text("TODAY'S SCHEDULE  → 千歳駅", style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+          const SizedBox(height: 8),
+          ScheduleList(timetable: timetable, direction: BusDirection.fromKenkyutoToStation),
+          const SizedBox(height: 16),
+          Text('更新: $updatedAt  有効期間: ${timetable.validFrom} 〜 ${timetable.validTo}',
+              style: const TextStyle(color: Color(0xFF444444), fontSize: 11)),
+        ],
       ),
     );
   }
