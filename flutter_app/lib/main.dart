@@ -12,7 +12,7 @@ class ChitoseBusApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CIT シャトルバス',
+      title: 'CIST シャトルバス',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
