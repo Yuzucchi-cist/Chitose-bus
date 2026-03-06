@@ -8,6 +8,9 @@
   "ios": {
     "path": "flutter_app/ios"
   },
+  "mobai": {
+    "url": "http://YUZU-SURFACE.local:8686"
+  },
   "flutter": {
     "watch": {}
   },
