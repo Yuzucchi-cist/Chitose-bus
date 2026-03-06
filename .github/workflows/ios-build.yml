@@ -207,25 +207,20 @@ jobs:
 
           if [ "$PROJECT_TYPE" = "flutter" ]; then
             cd ..
-            echo "Building Flutter iOS ($CONFIGURATION) via xcodebuild..."
-            # Encode dart defines from file for xcodebuild (Flutter's DART_DEFINES format)
-            DART_DEFINES=""
+            echo "Building Flutter iOS ($CONFIGURATION) via flutter build ios..."
+            # Build --dart-define flags from JSON file
+            DART_DEFINE_ARGS=""
             if [ -f "$GITHUB_WORKSPACE/.dart_define" ]; then
-              DART_DEFINES=$(python3 -c "import json,base64; d=json.load(open('$GITHUB_WORKSPACE/.dart_define')); print(','.join(base64.b64encode((k+'='+v).encode()).decode() for k,v in d.items()))")
+              DART_DEFINE_ARGS=$(python3 -c "import json; d=json.load(open('$GITHUB_WORKSPACE/.dart_define')); print(' '.join(f'--dart-define={k}={v}' for k, v in d.items()))")
             fi
-            xcodebuild \
-              -workspace "ios/Runner.xcworkspace" \
-              -scheme Runner \
-              -configuration "$CONFIGURATION" \
-              -destination 'generic/platform=iOS' \
-              -derivedDataPath "$DERIVED_DATA_PATH" \
-              CODE_SIGNING_ALLOWED=NO \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_IDENTITY="" \
-              DEVELOPMENT_TEAM="" \
-              COMPILER_INDEX_STORE_ENABLE=NO \
-              ${DART_DEFINES:+DART_DEFINES="$DART_DEFINES"} \
-              -quiet build
+            BUILD_MODE_FLAG=""
+            if [ "$CONFIGURATION" = "Debug" ]; then
+              BUILD_MODE_FLAG="--debug"
+            fi
+            flutter build ios \
+              --no-codesign \
+              $BUILD_MODE_FLAG \
+              $DART_DEFINE_ARGS
             cd "$GITHUB_WORKSPACE/$IOS_PATH"
           elif [ "$PROJECT_TYPE" = "reactnative" ] || [ "$PROJECT_TYPE" = "expo" ]; then
             # Use xcodebuild directly for React Native/Expo
@@ -314,7 +309,11 @@ jobs:
             echo "Created signed IPA: build/$BUILD_ID.ipa"
           else
             # For unsigned builds, find .app and create IPA
-            APP_PATH=$(find "$DERIVED_DATA_PATH/Build/Products/${CONFIGURATION}-iphoneos" -name "*.app" -type d | head -1)
+            FLUTTER_ROOT=$(dirname "$IOS_PATH")
+            APP_PATH=$(find "$GITHUB_WORKSPACE/$FLUTTER_ROOT/build/ios/iphoneos" -name "*.app" -type d 2>/dev/null | head -1)
+            if [ -z "$APP_PATH" ]; then
+              APP_PATH=$(find "$DERIVED_DATA_PATH/Build/Products/${CONFIGURATION}-iphoneos" -name "*.app" -type d 2>/dev/null | head -1)
+            fi
 
             if [ -z "$APP_PATH" ]; then
               echo "Error: Could not find .app"
