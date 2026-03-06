@@ -1,3 +1,6 @@
+# Local dev helpers (do not commit)
+bin/
+
 # Miscellaneous
 *.class
 *.log
