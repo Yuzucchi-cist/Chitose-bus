@@ -10,6 +10,7 @@ class BusEntryModel with _$BusEntryModel {
     required String time,
     required String direction,
     required String destination,
+    @Default(<String, String>{}) Map<String, String> arrivals,
   }) = _BusEntryModel;
 
   factory BusEntryModel.fromJson(Map<String, dynamic> json) =>
@@ -44,10 +45,16 @@ class ScheduleResponseModel with _$ScheduleResponseModel {
 extension BusEntryModelMapper on BusEntryModel {
   BusEntry toEntity() => BusEntry(
         time: time,
-        direction: direction == 'to_station'
-            ? BusDirection.toStation
-            : BusDirection.toUniversity,
+        direction: switch (direction) {
+          'from_chitose' => BusDirection.fromChitose,
+          'from_minami_chitose' => BusDirection.fromMinamiChitose,
+          'from_kenkyuto_to_honbuto' => BusDirection.fromKenkyutoToHonbuto,
+          'from_kenkyuto_to_station' => BusDirection.fromKenkyutoToStation,
+          'from_honbuto' => BusDirection.fromHonbuto,
+          _ => BusDirection.fromChitose,
+        },
         destination: destination,
+        arrivals: arrivals,
       );
 }
 

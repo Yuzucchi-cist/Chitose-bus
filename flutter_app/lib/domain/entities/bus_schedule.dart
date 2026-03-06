@@ -1,15 +1,23 @@
-enum BusDirection { toStation, toUniversity }
+enum BusDirection {
+  fromChitose,
+  fromMinamiChitose,
+  fromKenkyutoToHonbuto,
+  fromKenkyutoToStation,
+  fromHonbuto,
+}
 
 class BusEntry {
   const BusEntry({
     required this.time,
     required this.direction,
     required this.destination,
+    this.arrivals = const {},
   });
 
   final String time; // "HH:MM"
   final BusDirection direction;
   final String destination;
+  final Map<String, String> arrivals;
 
   DateTime toDateTimeToday() {
     final now = DateTime.now();
