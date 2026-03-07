@@ -18,6 +18,10 @@ jobs:
         run: flutter pub get
         working-directory: flutter_app
 
+      - name: Generate code (build_runner)
+        run: dart run build_runner build --delete-conflicting-outputs
+        working-directory: flutter_app
+
       - name: Run unit & widget tests
         run: flutter test
         working-directory: flutter_app
