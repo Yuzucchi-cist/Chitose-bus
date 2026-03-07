@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/bus_schedule.dart';
+import '../viewmodels/notification_viewmodel.dart';
 import '../viewmodels/schedule_viewmodel.dart';
+import 'notification_settings_screen.dart';
 import 'widgets/next_bus_display.dart';
 import 'widgets/schedule_list.dart';
 import 'widgets/weekend_warning_banner.dart';
@@ -60,6 +62,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             orElse: () => const SizedBox.shrink(),
           ),
           IconButton(
+            icon: const Icon(Icons.notifications_outlined,
+                color: Color(0xFF00FF88)),
+            tooltip: '通知設定',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const NotificationSettingsScreen()),
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh, color: Color(0xFF00FF88)),
             onPressed: () =>
                 ref.read(scheduleViewModelProvider.notifier).refresh(),
@@ -98,15 +110,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ],
           ),
         ),
-        data: (response) => TabBarView(
-          controller: _tabController,
-          children: [
-            _DirectionTab(timetable: response.current, direction: BusDirection.fromChitose, updatedAt: response.updatedAt),
-            _DirectionTab(timetable: response.current, direction: BusDirection.fromMinamiChitose, updatedAt: response.updatedAt),
-            _KenkyutoTab(timetable: response.current, updatedAt: response.updatedAt),
-            _DirectionTab(timetable: response.current, direction: BusDirection.fromHonbuto, updatedAt: response.updatedAt),
-          ],
-        ),
+        data: (response) {
+          // Schedule notifications when timetable data is available
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref
+                .read(notificationSettingsProvider.notifier)
+                .scheduleForTimetable(response.current);
+          });
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _DirectionTab(timetable: response.current, direction: BusDirection.fromChitose, updatedAt: response.updatedAt),
+              _DirectionTab(timetable: response.current, direction: BusDirection.fromMinamiChitose, updatedAt: response.updatedAt),
+              _KenkyutoTab(timetable: response.current, updatedAt: response.updatedAt),
+              _DirectionTab(timetable: response.current, direction: BusDirection.fromHonbuto, updatedAt: response.updatedAt),
+            ],
+          );
+        },
       ),
     );
   }
