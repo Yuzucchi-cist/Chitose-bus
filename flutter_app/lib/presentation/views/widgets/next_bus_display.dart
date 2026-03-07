@@ -15,19 +15,20 @@ class NextBusDisplay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(countdownProvider);
+    final now = ref.watch(countdownProvider);
 
-    final next = timetable.nextBus(direction);
+    final next = timetable.nextBus(direction, now: now);
     if (next == null) {
       return const _NoMoreBusCard();
     }
-    return _NextBusCard(entry: next);
+    return _NextBusCard(entry: next, now: now);
   }
 }
 
 class _NextBusCard extends StatelessWidget {
-  const _NextBusCard({required this.entry});
+  const _NextBusCard({required this.entry, required this.now});
   final BusEntry entry;
+  final DateTime now;
 
   static const _stopLabels = {
     'kenkyuto':      '研究棟',
@@ -78,7 +79,7 @@ class _NextBusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final minutes = entry.minutesFromNow();
+    final minutes = entry.minutesFromNow(now: now);
     final minLabel = minutes <= 0 ? '発車中' : 'あと $minutes 分';
 
     return Container(

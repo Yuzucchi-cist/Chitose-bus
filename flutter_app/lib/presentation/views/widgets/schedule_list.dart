@@ -15,10 +15,10 @@ class ScheduleList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(countdownProvider);
+    final now = ref.watch(countdownProvider);
 
     final buses = timetable.todayBuses(direction);
-    final nextBus = timetable.nextBus(direction);
+    final nextBus = timetable.nextBus(direction, now: now);
 
     if (buses.isEmpty) {
       return const Center(
@@ -35,7 +35,7 @@ class ScheduleList extends ConsumerWidget {
       itemCount: buses.length,
       itemBuilder: (context, index) {
         final bus = buses[index];
-        final isPast = bus.minutesFromNow() < 0;
+        final isPast = bus.minutesFromNow(now: now) < 0;
         final isNext = nextBus != null && bus.time == nextBus.time;
         return _ScheduleRow(bus: bus, isPast: isPast, isNext: isNext);
       },
