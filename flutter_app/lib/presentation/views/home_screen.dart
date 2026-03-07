@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -80,7 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
       ),
-      bottomNavigationBar: const _BannerAdWidget(),
+      bottomNavigationBar: kIsWeb ? null : const _BannerAdWidget(),
       body: scheduleAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: Color(0xFF00FF88)),
@@ -289,6 +290,7 @@ class _BannerAdWidgetState extends State<_BannerAdWidget> {
   @override
   void initState() {
     super.initState();
+    if (kIsWeb) return;
     _bannerAd = BannerAd(
       adUnitId: _adUnitId,
       request: const AdRequest(),
