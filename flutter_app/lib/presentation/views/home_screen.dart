@@ -139,7 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
       ),
-      bottomNavigationBar: const _BannerAdWidget(),
+      bottomNavigationBar: kIsWeb ? null : const _BannerAdWidget(),
       body: scheduleAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
@@ -486,6 +486,7 @@ class _BannerAdWidgetState extends State<_BannerAdWidget> {
   @override
   void initState() {
     super.initState();
+    if (kIsWeb) return;
     _bannerAd = BannerAd(
       adUnitId: _adUnitId,
       request: const AdRequest(),
