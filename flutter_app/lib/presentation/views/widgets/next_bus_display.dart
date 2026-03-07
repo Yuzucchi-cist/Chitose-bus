@@ -80,7 +80,7 @@ class _NextBusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final minutes = entry.minutesFromNow(now: now);
-    final minLabel = minutes <= 0 ? '発車中' : 'あと $minutes 分';
+    final minLabel = _formatCountdown(minutes);
 
     return Container(
       width: double.infinity,
@@ -139,6 +139,16 @@ class _NextBusCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// カウントダウン分数を文字列に変換する
+/// 0分以下: '発車中', 1–59分: 'あと m 分', 60分以上: 'あと h:mm'
+String _formatCountdown(int minutes) {
+  if (minutes <= 0) return '発車中';
+  if (minutes < 60) return 'あと $minutes 分';
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  return 'あと $h:${m.toString().padLeft(2, '0')}';
 }
 
 class _NoMoreBusCard extends StatelessWidget {
