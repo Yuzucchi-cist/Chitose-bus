@@ -73,7 +73,9 @@ class _SettingsBody extends ConsumerWidget {
             ),
             value: settings.enabled,
             activeThumbColor: const Color(0xFF00FF88),
-            onChanged: (v) => notifier.saveSettings(settings.copyWith(enabled: v)),
+            onChanged: (v) => v
+                ? notifier.enableNotifications(settings)
+                : notifier.saveSettings(settings.copyWith(enabled: false)),
           ),
         ),
         const SizedBox(height: 16),
