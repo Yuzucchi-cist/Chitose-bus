@@ -19,20 +19,21 @@ class BusEntry {
   final String destination;
   final Map<String, String> arrivals;
 
-  DateTime toDateTimeToday() {
-    final now = DateTime.now();
+  DateTime toDateTimeToday({DateTime? now}) {
+    final base = now ?? DateTime.now();
     final parts = time.split(':');
     return DateTime(
-      now.year,
-      now.month,
-      now.day,
+      base.year,
+      base.month,
+      base.day,
       int.parse(parts[0]),
       int.parse(parts[1]),
     );
   }
 
-  int minutesFromNow() {
-    final diff = toDateTimeToday().difference(DateTime.now());
+  int minutesFromNow({DateTime? now}) {
+    final base = now ?? DateTime.now();
+    final diff = toDateTimeToday(now: base).difference(base);
     return diff.inMinutes;
   }
 }
@@ -48,10 +49,10 @@ class BusTimetable {
   final String validTo;
   final List<BusEntry> schedules;
 
-  BusEntry? nextBus(BusDirection direction) {
-    final now = DateTime.now();
+  BusEntry? nextBus(BusDirection direction, {DateTime? now}) {
+    final current = now ?? DateTime.now();
     return schedules
-        .where((e) => e.direction == direction && e.toDateTimeToday().isAfter(now))
+        .where((e) => e.direction == direction && e.toDateTimeToday(now: current).isAfter(current))
         .firstOrNull;
   }
 
