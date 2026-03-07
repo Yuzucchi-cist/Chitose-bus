@@ -13,7 +13,7 @@ Widget _wrap(Widget child) => ProviderScope(
 
 void main() {
   group('NextBusDisplay', () {
-    testWidgets('次のバスがある場合: バス時刻・「あと N 分」ラベル・行き先テキストが表示される',
+    testWidgets('次のバスがある場合: バス時刻・カウントダウンラベル・行き先テキストが表示される',
         (tester) async {
       final busTime = safeFutureHhmm(60);
       final timetable = BusTimetable(
@@ -33,7 +33,7 @@ void main() {
             timetable: timetable, direction: BusDirection.fromChitose)),
       );
 
-      // Time text (HH:MM format)
+      // Departure time text (HH:MM format)
       expect(
         find.byWidgetPredicate((w) =>
             w is Text &&
@@ -41,7 +41,14 @@ void main() {
             RegExp(r'^\d{2}:\d{2}$').hasMatch(w.data!)),
         findsOneWidget,
       );
-      expect(find.textContaining('あと'), findsOneWidget);
+      // Countdown label: 60min → 'あと 1:00' (h:mm format)
+      expect(
+        find.byWidgetPredicate((w) =>
+            w is Text &&
+            w.data != null &&
+            RegExp(r'^あと \d+:\d{2}$').hasMatch(w.data!)),
+        findsAtLeastNWidgets(1),
+      );
       expect(find.text('→ 千歳科技大'), findsOneWidget);
     });
 
@@ -65,7 +72,7 @@ void main() {
             timetable: timetable, direction: BusDirection.fromChitose)),
       );
 
-      // minutesFromNow() ≤ 5 → label is '発車中' or 'あと N 分', color is red.
+      // minutesFromNow() ≤ 5 → label is 'あと N 分' or '発車中', color is red.
       final labelText = tester.widget<Text>(
         find.byWidgetPredicate((w) =>
             w is Text &&
@@ -149,6 +156,72 @@ void main() {
       );
 
       expect(find.text('本日の運行は終了しました'), findsOneWidget);
+    });
+
+    testWidgets('カウントダウン境界値: 59分 → あと 59 分', (tester) async {
+      final busTime = safeFutureHhmm(59);
+      final timetable = BusTimetable(
+        validFrom: '2024-01-01',
+        validTo: '2024-03-31',
+        schedules: [
+          BusEntry(
+            time: busTime,
+            direction: BusDirection.fromChitose,
+            destination: '千歳科技大',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _wrap(NextBusDisplay(
+            timetable: timetable, direction: BusDirection.fromChitose)),
+      );
+
+      expect(find.text('あと 59 分'), findsOneWidget);
+    });
+
+    testWidgets('カウントダウン境界値: 60分 → あと 1:00', (tester) async {
+      final busTime = safeFutureHhmm(60);
+      final timetable = BusTimetable(
+        validFrom: '2024-01-01',
+        validTo: '2024-03-31',
+        schedules: [
+          BusEntry(
+            time: busTime,
+            direction: BusDirection.fromChitose,
+            destination: '千歳科技大',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _wrap(NextBusDisplay(
+            timetable: timetable, direction: BusDirection.fromChitose)),
+      );
+
+      expect(find.text('あと 1:00'), findsOneWidget);
+    });
+
+    testWidgets('カウントダウン境界値: 90分 → あと 1:30', (tester) async {
+      final busTime = safeFutureHhmm(90);
+      final timetable = BusTimetable(
+        validFrom: '2024-01-01',
+        validTo: '2024-03-31',
+        schedules: [
+          BusEntry(
+            time: busTime,
+            direction: BusDirection.fromChitose,
+            destination: '千歳科技大',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _wrap(NextBusDisplay(
+            timetable: timetable, direction: BusDirection.fromChitose)),
+      );
+
+      expect(find.text('あと 1:30'), findsOneWidget);
     });
 
     testWidgets('arrivalsに値がある場合: 到着停留所・時刻が表示される', (tester) async {
