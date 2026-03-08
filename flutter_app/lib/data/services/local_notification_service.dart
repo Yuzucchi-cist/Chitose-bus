@@ -17,6 +17,7 @@ class LocalNotificationService implements NotificationService {
   Future<void> initialize() async {
     if (_initialized) return;
     tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Tokyo'));
 
     await _plugin.initialize(
       const InitializationSettings(
@@ -27,8 +28,22 @@ class LocalNotificationService implements NotificationService {
           requestSoundPermission: false,
         ),
       ),
+      onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
+      onDidReceiveBackgroundNotificationResponse:
+          _onDidReceiveBackgroundNotificationResponse,
     );
     _initialized = true;
+  }
+
+  static void _onDidReceiveNotificationResponse(NotificationResponse response) {
+    // 通知タップ時の処理（フォアグラウンド・バックグラウンド共通）
+  }
+
+  @pragma('vm:entry-point')
+  static void _onDidReceiveBackgroundNotificationResponse(
+      NotificationResponse response) {
+    // バックグラウンドで通知をタップした際の処理
+    // @pragma('vm:entry-point') によりリリースビルドでも保持される
   }
 
   @override

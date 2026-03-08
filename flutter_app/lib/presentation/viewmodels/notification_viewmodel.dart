@@ -34,6 +34,13 @@ class NotificationSettingsNotifier
     state = AsyncData(settings);
   }
 
+  /// 通知を有効にする。権限がなければリクエストし、拒否された場合は enabled=false のまま保存する。
+  Future<void> enableNotifications(NotificationSettings current) async {
+    final service = ref.read(notificationServiceProvider);
+    final granted = await service.requestPermission();
+    await saveSettings(current.copyWith(enabled: granted));
+  }
+
   Future<void> scheduleForTimetable(BusTimetable timetable) async {
     final settingsState = state;
     if (settingsState is! AsyncData<NotificationSettings>) return;
