@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
 import '../../data/repositories/schedule_repository_impl.dart';
+import '../../data/services/widget_update_service.dart';
 import '../../data/sources/schedule_remote_source.dart';
 import '../../domain/entities/bus_schedule.dart';
 
@@ -36,9 +37,15 @@ class ScheduleViewModel extends AsyncNotifier<ScheduleResponse> {
     return _fetch();
   }
 
-  Future<ScheduleResponse> _fetch() {
+  Future<ScheduleResponse> _fetch() async {
     final repo = ref.read(scheduleRepositoryProvider);
-    return repo.fetchSchedule();
+    final response = await repo.fetchSchedule();
+    _updateWidget(response.current);
+    return response;
+  }
+
+  void _updateWidget(BusTimetable timetable) {
+    WidgetUpdateService.instance.updateWidget(timetable).ignore();
   }
 
   void _startAutoRefresh() {
