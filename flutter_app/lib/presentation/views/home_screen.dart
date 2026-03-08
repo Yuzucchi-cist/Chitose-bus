@@ -336,41 +336,54 @@ class _DirectionTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const WeekendWarningBanner(),
-          const SizedBox(height: 8),
-          const Text(
-            'NEXT BUS',
-            style: TextStyle(
-              color: Color(0xFF666666),
-              fontSize: 12,
-              letterSpacing: 3,
-            ),
+    // Column + Expanded 構成により:
+    // - NEXT BUS セクションを固定ヘッダとして常時表示
+    // - ScheduleList に有界な高さを与えて独立スクロール可能にする
+    // - Scrollable.ensureVisible が ListView 自身をスクロール（親は不変）
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const WeekendWarningBanner(),
+              const SizedBox(height: 8),
+              const Text(
+                'NEXT BUS',
+                style: TextStyle(
+                  color: Color(0xFF666666),
+                  fontSize: 12,
+                  letterSpacing: 3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              NextBusDisplay(timetable: timetable, direction: direction),
+              const SizedBox(height: 24),
+              const Text(
+                'TODAY\'S SCHEDULE',
+                style: TextStyle(
+                  color: Color(0xFF666666),
+                  fontSize: 12,
+                  letterSpacing: 3,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
           ),
-          const SizedBox(height: 8),
-          NextBusDisplay(timetable: timetable, direction: direction),
-          const SizedBox(height: 24),
-          const Text(
-            'TODAY\'S SCHEDULE',
-            style: TextStyle(
-              color: Color(0xFF666666),
-              fontSize: 12,
-              letterSpacing: 3,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ScheduleList(timetable: timetable, direction: direction),
-          const SizedBox(height: 16),
-          Text(
+        ),
+        Expanded(
+          child: ScheduleList(timetable: timetable, direction: direction),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Text(
             '更新: $updatedAt  有効期間: ${timetable.validFrom} 〜 ${timetable.validTo}',
             style: const TextStyle(color: Color(0xFF444444), fontSize: 11),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

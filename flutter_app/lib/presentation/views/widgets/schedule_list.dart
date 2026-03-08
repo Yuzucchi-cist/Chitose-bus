@@ -19,6 +19,10 @@ class ScheduleList extends ConsumerStatefulWidget {
 
 class _ScheduleListState extends ConsumerState<ScheduleList> {
   final GlobalKey _nextBusKey = GlobalKey();
+  // LayoutBuilder のコールバックで設定される。
+  // true = 有界コンテキスト（_DirectionTab の Expanded 配下）→ 独立スクロール
+  // false = 非有界コンテキスト（_KenkyutoTab・来週ダイヤ BottomSheet）→ スクロールなし
+  bool _isBounded = false;
 
   @override
   void initState() {
@@ -27,11 +31,15 @@ class _ScheduleListState extends ConsumerState<ScheduleList> {
     // - direction は各タブで固定のため変化しない
     // - timetable 更新時の再スクロールは要件外（ユーザー操作の上書きを避けるため）
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // nextBus が null（来週ダイヤの ScheduleList 等）の場合は
-      // _nextBusKey がどのウィジェットにも付与されないため
-      // currentContext が null となりスクロールは発生しない（意図通り）。
+      // 非有界コンテキスト（KenkyutoTab・来週ダイヤ等）はスクロールしない。
+      // nextBus が null の場合は _nextBusKey が付与されず currentContext が null となり
+      // スクロールは発生しない（意図通り）。
+      if (!_isBounded) return;
       final ctx = _nextBusKey.currentContext;
       if (ctx != null) {
+        // 有界コンテキストでは ListView 自身が独立スクロール可能なため、
+        // ensureVisible が ListView をスクロールする（親 SingleChildScrollView は不変）。
+        // NEXT BUS セクションは常時表示のまま維持される。
         Scrollable.ensureVisible(
           ctx,
           alignment: 0.0,
@@ -62,19 +70,26 @@ class _ScheduleListState extends ConsumerState<ScheduleList> {
     // indexOf が正確に1件を特定でき、同時刻便が複数あっても GlobalKey の重複付与を防ぐ。
     final nextBusIndex = nextBus != null ? buses.indexOf(nextBus) : -1;
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: buses.length,
-      itemBuilder: (context, index) {
-        final bus = buses[index];
-        final isPast = bus.minutesFromNow(now: now) < 0;
-        final isNext = index == nextBusIndex;
-        return _ScheduleRow(
-          key: isNext ? _nextBusKey : null,
-          bus: bus,
-          isPast: isPast,
-          isNext: isNext,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // maxHeight が有限 = Expanded 等で有界な高さが与えられている（_DirectionTab）。
+        // maxHeight が無限大 = SingleChildScrollView 配下（_KenkyutoTab・BottomSheet 等）。
+        _isBounded = constraints.maxHeight.isFinite;
+        return ListView.builder(
+          shrinkWrap: !_isBounded,
+          physics: _isBounded ? null : const NeverScrollableScrollPhysics(),
+          itemCount: buses.length,
+          itemBuilder: (context, index) {
+            final bus = buses[index];
+            final isPast = bus.minutesFromNow(now: now) < 0;
+            final isNext = index == nextBusIndex;
+            return _ScheduleRow(
+              key: isNext ? _nextBusKey : null,
+              bus: bus,
+              isPast: isPast,
+              isNext: isNext,
+            );
+          },
         );
       },
     );
