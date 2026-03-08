@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/bus_schedule.dart';
 import '../../viewmodels/schedule_viewmodel.dart';
 
-class ScheduleList extends ConsumerWidget {
+class ScheduleList extends ConsumerStatefulWidget {
   const ScheduleList({
     super.key,
     required this.timetable,
@@ -14,11 +14,33 @@ class ScheduleList extends ConsumerWidget {
   final BusDirection direction;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ScheduleList> createState() => _ScheduleListState();
+}
+
+class _ScheduleListState extends ConsumerState<ScheduleList> {
+  final GlobalKey _nextBusKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _nextBusKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          alignment: 0.0,
+          duration: Duration.zero,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final now = ref.watch(countdownProvider);
 
-    final buses = timetable.todayBuses(direction);
-    final nextBus = timetable.nextBus(direction, now: now);
+    final buses = widget.timetable.todayBuses(widget.direction);
+    final nextBus = widget.timetable.nextBus(widget.direction, now: now);
 
     if (buses.isEmpty) {
       return const Center(
@@ -37,7 +59,12 @@ class ScheduleList extends ConsumerWidget {
         final bus = buses[index];
         final isPast = bus.minutesFromNow(now: now) < 0;
         final isNext = nextBus != null && bus.time == nextBus.time;
-        return _ScheduleRow(bus: bus, isPast: isPast, isNext: isNext);
+        return _ScheduleRow(
+          key: isNext ? _nextBusKey : null,
+          bus: bus,
+          isPast: isPast,
+          isNext: isNext,
+        );
       },
     );
   }
@@ -45,6 +72,7 @@ class ScheduleList extends ConsumerWidget {
 
 class _ScheduleRow extends StatefulWidget {
   const _ScheduleRow({
+    super.key,
     required this.bus,
     required this.isPast,
     required this.isNext,
