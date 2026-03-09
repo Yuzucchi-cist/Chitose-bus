@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'presentation/views/home_screen.dart';
 
 void main() async {
@@ -21,11 +22,10 @@ class ChitoseBusApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
         scaffoldBackgroundColor: const Color(0xFF0A0A0A),
-        fontFamily: 'monospace',
-        // Linux の monospace フォントは CJK グリフを含まないため、
-        // Noto CJK フォントへのフォールバックを指定して日本語文字化けを防ぐ。
-        textTheme: const TextTheme().apply(
-          fontFamilyFallback: ['Noto Sans Mono CJK JP', 'Noto Sans CJK JP'],
+        // google_fonts で Noto Sans JP をバンドルし、システムフォントに依存せず
+        // Linux 環境でも日本語を正しく表示する。
+        textTheme: GoogleFonts.notoSansJpTextTheme(
+          ThemeData(brightness: Brightness.dark).textTheme,
         ),
       ),
       home: const HomeScreen(),
