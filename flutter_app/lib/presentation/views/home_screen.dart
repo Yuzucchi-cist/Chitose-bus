@@ -292,71 +292,88 @@ class _KenkyutoTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 各ルートセクション全体（固定ヘッダ＋スクロールリスト）を外側 Expanded で囲むことで
-    // 2つの NextBusDisplay カードが固定ヘッダとして合算されず RenderFlex overflow を防ぐ。
-    // 各外側 Expanded が利用可能高さを均等に分割し、その中で内側の Column が
-    // 固定ヘッダ高さを消費した残りをスクロールリスト（内側 Expanded）に割り当てる。
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: WeekendWarningBanner(),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('NEXT BUS  → 本部棟', style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
-                    const SizedBox(height: 8),
-                    NextBusDisplay(timetable: timetable, direction: BusDirection.fromKenkyutoToHonbuto),
-                    const SizedBox(height: 24),
-                    const Text("TODAY'S SCHEDULE  → 本部棟", style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ScheduleList(timetable: timetable, direction: BusDirection.fromKenkyutoToHonbuto),
-              ),
+    // DefaultTabController + TabBarView で本部棟/千歳駅を切り替える。
+    // 各タブが全高さを使えるため、NextBusDisplay の高さが可変でも overflow が発生しない。
+    // 各タブ内の構造は _DirectionTab と同じ Column + Expanded 構成。
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: WeekendWarningBanner(),
+          ),
+          const TabBar(
+            indicatorColor: Color(0xFF00FF88),
+            labelColor: Color(0xFF00FF88),
+            unselectedLabelColor: Color(0xFF444444),
+            tabs: [
+              Tab(text: '→ 本部棟'),
+              Tab(text: '→ 千歳駅'),
             ],
           ),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Column(
+          Expanded(
+            child: TabBarView(
+              children: [
+                // 本部棟タブ: _DirectionTab と同じ Column + Expanded 構成
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('NEXT BUS  → 千歳駅', style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
-                    const SizedBox(height: 8),
-                    NextBusDisplay(timetable: timetable, direction: BusDirection.fromKenkyutoToStation),
-                    const SizedBox(height: 24),
-                    const Text("TODAY'S SCHEDULE  → 千歳駅", style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
-                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('NEXT BUS', style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+                          const SizedBox(height: 8),
+                          NextBusDisplay(timetable: timetable, direction: BusDirection.fromKenkyutoToHonbuto),
+                          const SizedBox(height: 24),
+                          const Text("TODAY'S SCHEDULE", style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ScheduleList(timetable: timetable, direction: BusDirection.fromKenkyutoToHonbuto),
+                    ),
                   ],
                 ),
-              ),
-              Expanded(
-                child: ScheduleList(timetable: timetable, direction: BusDirection.fromKenkyutoToStation),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: Text('更新: $updatedAt  有効期間: ${timetable.validFrom} 〜 ${timetable.validTo}',
-                    style: const TextStyle(color: Color(0xFF444444), fontSize: 11)),
-              ),
-            ],
+                // 千歳駅タブ: _DirectionTab と同じ Column + Expanded 構成
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('NEXT BUS', style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+                          const SizedBox(height: 8),
+                          NextBusDisplay(timetable: timetable, direction: BusDirection.fromKenkyutoToStation),
+                          const SizedBox(height: 24),
+                          const Text("TODAY'S SCHEDULE", style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ScheduleList(timetable: timetable, direction: BusDirection.fromKenkyutoToStation),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Text(
+              '更新: $updatedAt  有効期間: ${timetable.validFrom} 〜 ${timetable.validTo}',
+              style: const TextStyle(color: Color(0xFF444444), fontSize: 11),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
