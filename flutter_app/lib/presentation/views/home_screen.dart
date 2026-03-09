@@ -285,40 +285,102 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 }
 
-class _KenkyutoTab extends StatelessWidget {
+class _KenkyutoTab extends StatefulWidget {
   const _KenkyutoTab({required this.timetable, required this.updatedAt});
   final BusTimetable timetable;
   final String updatedAt;
 
   @override
+  State<_KenkyutoTab> createState() => _KenkyutoTabState();
+}
+
+class _KenkyutoTabState extends State<_KenkyutoTab> {
+  BusDirection _direction = BusDirection.fromKenkyutoToHonbuto;
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const WeekendWarningBanner(),
-          const SizedBox(height: 8),
-          const Text('NEXT BUS  → 本部棟', style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
-          const SizedBox(height: 8),
-          NextBusDisplay(timetable: timetable, direction: BusDirection.fromKenkyutoToHonbuto),
-          const SizedBox(height: 24),
-          const Text("TODAY'S SCHEDULE  → 本部棟", style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
-          const SizedBox(height: 8),
-          ScheduleList(timetable: timetable, direction: BusDirection.fromKenkyutoToHonbuto),
-          const SizedBox(height: 32),
-          const Text('NEXT BUS  → 千歳駅', style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
-          const SizedBox(height: 8),
-          NextBusDisplay(timetable: timetable, direction: BusDirection.fromKenkyutoToStation),
-          const SizedBox(height: 24),
-          const Text("TODAY'S SCHEDULE  → 千歳駅", style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
-          const SizedBox(height: 8),
-          ScheduleList(timetable: timetable, direction: BusDirection.fromKenkyutoToStation),
-          const SizedBox(height: 16),
-          Text('更新: $updatedAt  有効期間: ${timetable.validFrom} 〜 ${timetable.validTo}',
-              style: const TextStyle(color: Color(0xFF444444), fontSize: 11)),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: WeekendWarningBanner(),
+        ),
+        // SegmentedButton で本部棟/千歳駅を切り替え
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: SegmentedButton<BusDirection>(
+            segments: const [
+              ButtonSegment(
+                value: BusDirection.fromKenkyutoToHonbuto,
+                label: Text('→ 本部棟'),
+              ),
+              ButtonSegment(
+                value: BusDirection.fromKenkyutoToStation,
+                label: Text('→ 千歳駅'),
+              ),
+            ],
+            selected: {_direction},
+            onSelectionChanged: (selection) =>
+                setState(() => _direction = selection.first),
+            style: SegmentedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A1A1A),
+              foregroundColor: const Color(0xFF666666),
+              selectedBackgroundColor: const Color(0xFF00FF88),
+              selectedForegroundColor: const Color(0xFF0A0A0A),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('NEXT BUS', style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+              const SizedBox(height: 8),
+              // IndexedStack で両方向の NextBusDisplay を常時保持し、
+              // 本部棟↔千歳駅切り替え時のレイアウトガタつきを防ぐ。
+              IndexedStack(
+                index: _direction == BusDirection.fromKenkyutoToHonbuto ? 0 : 1,
+                children: [
+                  NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToHonbuto),
+                  NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToStation),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Text("TODAY'S SCHEDULE", style: TextStyle(color: Color(0xFF666666), fontSize: 12, letterSpacing: 3)),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+        // IndexedStack で両 ScheduleList の State を常時保持することで
+        // 本部棟↔千歳駅切り替え時にスクロール位置が独立して維持される。
+        // PageStorageKey でスクロール位置を方向ごとに永続化する。
+        Expanded(
+          child: IndexedStack(
+            index: _direction == BusDirection.fromKenkyutoToHonbuto ? 0 : 1,
+            children: [
+              ScheduleList(
+                key: const PageStorageKey('kenkyuto_honbuto'),
+                timetable: widget.timetable,
+                direction: BusDirection.fromKenkyutoToHonbuto,
+              ),
+              ScheduleList(
+                key: const PageStorageKey('kenkyuto_chitose'),
+                timetable: widget.timetable,
+                direction: BusDirection.fromKenkyutoToStation,
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Text(
+            '更新: ${widget.updatedAt}  有効期間: ${widget.timetable.validFrom} 〜 ${widget.timetable.validTo}',
+            style: const TextStyle(color: Color(0xFF444444), fontSize: 11),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -336,41 +398,54 @@ class _DirectionTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const WeekendWarningBanner(),
-          const SizedBox(height: 8),
-          const Text(
-            'NEXT BUS',
-            style: TextStyle(
-              color: Color(0xFF666666),
-              fontSize: 12,
-              letterSpacing: 3,
-            ),
+    // Column + Expanded 構成により:
+    // - NEXT BUS セクションを固定ヘッダとして常時表示
+    // - ScheduleList に有界な高さを与えて独立スクロール可能にする
+    // - Scrollable.ensureVisible が ListView 自身をスクロール（親は不変）
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const WeekendWarningBanner(),
+              const SizedBox(height: 8),
+              const Text(
+                'NEXT BUS',
+                style: TextStyle(
+                  color: Color(0xFF666666),
+                  fontSize: 12,
+                  letterSpacing: 3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              NextBusDisplay(timetable: timetable, direction: direction),
+              const SizedBox(height: 24),
+              const Text(
+                'TODAY\'S SCHEDULE',
+                style: TextStyle(
+                  color: Color(0xFF666666),
+                  fontSize: 12,
+                  letterSpacing: 3,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
           ),
-          const SizedBox(height: 8),
-          NextBusDisplay(timetable: timetable, direction: direction),
-          const SizedBox(height: 24),
-          const Text(
-            'TODAY\'S SCHEDULE',
-            style: TextStyle(
-              color: Color(0xFF666666),
-              fontSize: 12,
-              letterSpacing: 3,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ScheduleList(timetable: timetable, direction: direction),
-          const SizedBox(height: 16),
-          Text(
+        ),
+        Expanded(
+          child: ScheduleList(timetable: timetable, direction: direction),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Text(
             '更新: $updatedAt  有効期間: ${timetable.validFrom} 〜 ${timetable.validTo}',
             style: const TextStyle(color: Color(0xFF444444), fontSize: 11),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
