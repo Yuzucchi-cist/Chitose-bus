@@ -350,8 +350,25 @@ class _KenkyutoTabState extends State<_KenkyutoTab> {
             ],
           ),
         ),
+        // IndexedStack で両 ScheduleList の State を常時保持することで
+        // 本部棟↔千歳駅切り替え時にスクロール位置が独立して維持される。
+        // PageStorageKey でスクロール位置を方向ごとに永続化する。
         Expanded(
-          child: ScheduleList(timetable: widget.timetable, direction: _direction),
+          child: IndexedStack(
+            index: _direction == BusDirection.fromKenkyutoToHonbuto ? 0 : 1,
+            children: [
+              ScheduleList(
+                key: const PageStorageKey('kenkyuto_honbuto'),
+                timetable: widget.timetable,
+                direction: BusDirection.fromKenkyutoToHonbuto,
+              ),
+              ScheduleList(
+                key: const PageStorageKey('kenkyuto_chitose'),
+                timetable: widget.timetable,
+                direction: BusDirection.fromKenkyutoToStation,
+              ),
+            ],
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
