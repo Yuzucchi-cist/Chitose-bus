@@ -22,6 +22,11 @@ class ChitoseBusApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFF0A0A0A),
         fontFamily: 'monospace',
+        // Linux の monospace フォントは CJK グリフを含まないため、
+        // Noto CJK フォントへのフォールバックを指定して日本語文字化けを防ぐ。
+        textTheme: const TextTheme().apply(
+          fontFamilyFallback: ['Noto Sans Mono CJK JP', 'Noto Sans CJK JP'],
+        ),
       ),
       home: const HomeScreen(),
     );
