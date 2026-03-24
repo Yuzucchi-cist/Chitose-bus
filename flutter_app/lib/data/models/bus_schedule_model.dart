@@ -11,6 +11,8 @@ class BusEntryModel with _$BusEntryModel {
     required String direction,
     required String destination,
     @Default(<String, String>{}) Map<String, String> arrivals,
+    int? routeNumber,
+    int? platformNumber,
   }) = _BusEntryModel;
 
   factory BusEntryModel.fromJson(Map<String, dynamic> json) =>
@@ -50,11 +52,13 @@ extension BusEntryModelMapper on BusEntryModel {
           'from_minami_chitose' => BusDirection.fromMinamiChitose,
           'from_kenkyuto_to_honbuto' => BusDirection.fromKenkyutoToHonbuto,
           'from_kenkyuto_to_station' => BusDirection.fromKenkyutoToStation,
-          'from_honbuto' => BusDirection.fromHonbuto,
+          'to_honbuto' => BusDirection.toHonbuto,
           _ => BusDirection.fromChitose,
         },
         destination: destination,
         arrivals: arrivals,
+        routeNumber: routeNumber,
+        platformNumber: platformNumber,
       );
 }
 

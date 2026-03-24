@@ -1,9 +1,9 @@
 enum BusDirection {
-  fromChitose,
-  fromMinamiChitose,
-  fromKenkyutoToHonbuto,
-  fromKenkyutoToStation,
-  fromHonbuto,
+  fromChitose,            // 千歳駅タブ（系統1+2+3 時刻順混在）
+  fromMinamiChitose,      // 南千歳タブ（系統1+3）
+  fromKenkyutoToHonbuto,  // 研究棟タブ「→本部棟」（大学行き）
+  fromKenkyutoToStation,  // 研究棟タブ「→千歳駅」（大学発）
+  toHonbuto,              // 本部棟タブ（大学行きのみ）
 }
 
 class BusEntry {
@@ -12,12 +12,16 @@ class BusEntry {
     required this.direction,
     required this.destination,
     this.arrivals = const {},
+    this.routeNumber,
+    this.platformNumber,
   });
 
   final String time; // "HH:MM"
   final BusDirection direction;
   final String destination;
   final Map<String, String> arrivals;
+  final int? routeNumber;     // 系統番号（1, 2, 3）
+  final int? platformNumber;  // 乗り場番号（3番, 5番等）
 
   DateTime toDateTimeToday({DateTime? now}) {
     final base = now ?? DateTime.now();

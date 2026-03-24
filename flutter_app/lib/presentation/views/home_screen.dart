@@ -156,7 +156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               _DirectionTab(timetable: response.current, direction: BusDirection.fromChitose, updatedAt: response.updatedAt),
               _DirectionTab(timetable: response.current, direction: BusDirection.fromMinamiChitose, updatedAt: response.updatedAt),
               _KenkyutoTab(timetable: response.current, updatedAt: response.updatedAt),
-              _DirectionTab(timetable: response.current, direction: BusDirection.fromHonbuto, updatedAt: response.updatedAt),
+              _DirectionTab(timetable: response.current, direction: BusDirection.toHonbuto, updatedAt: response.updatedAt),
             ],
           );
         },
@@ -276,7 +276,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               const SizedBox(height: 16),
               const Text('本部棟発', style: TextStyle(color: Color(0xFF00FF88), fontSize: 12, letterSpacing: 3)),
               const SizedBox(height: 8),
-              ScheduleList(timetable: upcoming, direction: BusDirection.fromHonbuto),
+              ScheduleList(timetable: upcoming, direction: BusDirection.toHonbuto),
             ],
           ),
         ),

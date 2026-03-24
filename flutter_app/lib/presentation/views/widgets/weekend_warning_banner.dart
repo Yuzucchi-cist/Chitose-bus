@@ -24,7 +24,7 @@ class WeekendWarningBanner extends ConsumerWidget {
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              '土日祝日はバスが運行していない場合があります',
+              '土日祝日は一部の便のみ運行します（系統2は運休）',
               style: TextStyle(
                 color: Color(0xFFFFB000),
                 fontSize: 12,

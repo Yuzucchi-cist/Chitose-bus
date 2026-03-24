@@ -42,7 +42,7 @@ class _NextBusCard extends StatelessWidget {
     BusDirection.fromMinamiChitose:     ['kenkyuto', 'honbuto'],
     BusDirection.fromKenkyutoToHonbuto: ['honbuto'],
     BusDirection.fromKenkyutoToStation: ['minamiChitose', 'chitose'],
-    BusDirection.fromHonbuto:           ['kenkyuto', 'minamiChitose', 'chitose'],
+    BusDirection.toHonbuto:             ['honbuto'],
   };
 
   List<Widget> _buildArrivalRows(BusEntry entry) {
@@ -98,7 +98,7 @@ class _NextBusCard extends StatelessWidget {
               BusDirection.fromMinamiChitose => '→ 千歳科技大',
               BusDirection.fromKenkyutoToHonbuto => '→ 本部棟',
               BusDirection.fromKenkyutoToStation => '→ 千歳駅',
-              BusDirection.fromHonbuto => '→ 千歳駅',
+              BusDirection.toHonbuto => '→ 本部棟',
             },
             style: const TextStyle(
               color: Color(0xFF00FF88),
