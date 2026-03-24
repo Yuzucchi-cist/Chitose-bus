@@ -5,8 +5,13 @@ import '../../viewmodels/schedule_viewmodel.dart';
 class WeekendWarningBanner extends ConsumerWidget {
   const WeekendWarningBanner({super.key});
 
+  // 表示を一時無効化（将来の再有効化に備えてコードを保持）
+  static const bool _enabled = false;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!_enabled) return const SizedBox.shrink();
+
     final now = ref.watch(countdownProvider);
     final isWeekend = now.weekday == DateTime.saturday ||
         now.weekday == DateTime.sunday;

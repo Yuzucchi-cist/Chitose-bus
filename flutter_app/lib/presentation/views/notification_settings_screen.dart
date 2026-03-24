@@ -11,7 +11,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
   static const _directionLabels = {
     BusDirection.fromChitose: '千歳駅発',
     BusDirection.fromMinamiChitose: '南千歳発',
-    BusDirection.fromKenkyutoToHonbuto: '研究棟発 → 本部棟',
+    BusDirection.fromKenkyutoToHonbuto: '研究棟発（→本部棟方面）',
     BusDirection.fromKenkyutoToStation: '研究棟発 → 千歳駅',
     BusDirection.fromHonbuto: '本部棟発',
   };

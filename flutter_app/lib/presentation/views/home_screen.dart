@@ -421,7 +421,11 @@ class _DirectionTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              NextBusDisplay(timetable: timetable, direction: direction),
+              NextBusDisplay(
+                timetable: timetable,
+                direction: direction,
+                showPlatform: direction == BusDirection.fromChitose,
+              ),
               const SizedBox(height: 24),
               const Text(
                 'TODAY\'S SCHEDULE',
