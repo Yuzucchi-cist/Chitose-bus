@@ -251,11 +251,11 @@ function buildTimetable() {
     });
   });
 
-  // --- toHonbuto: 系統1+2+3 の本部棟着時刻 ---
+  // --- fromHonbuto: 系統1+2+3 の本部棟着時刻 ---
   ROUTE1_OUTBOUND.forEach(function(e) {
     schedules.push({
       time: padTime(e.honbuto),
-      direction: 'to_honbuto',
+      direction: 'from_honbuto',
       destination: '本部棟',
       routeNumber: 1,
       arrivals: {},
@@ -266,7 +266,7 @@ function buildTimetable() {
   ROUTE2_OUTBOUND.forEach(function(e) {
     schedules.push({
       time: padTime(e.honbuto),
-      direction: 'to_honbuto',
+      direction: 'from_honbuto',
       destination: '本部棟',
       routeNumber: 2,
       arrivals: {},
@@ -277,7 +277,7 @@ function buildTimetable() {
   ROUTE3_OUTBOUND.forEach(function(e) {
     schedules.push({
       time: padTime(e.honbuto),
-      direction: 'to_honbuto',
+      direction: 'from_honbuto',
       destination: '本部棟',
       routeNumber: 3,
       arrivals: {},

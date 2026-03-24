@@ -3,7 +3,7 @@ enum BusDirection {
   fromMinamiChitose,      // 南千歳タブ（系統1+3）
   fromKenkyutoToHonbuto,  // 研究棟タブ「→本部棟」（大学行き）
   fromKenkyutoToStation,  // 研究棟タブ「→千歳駅」（大学発）
-  toHonbuto,              // 本部棟タブ（大学行きのみ）
+  fromHonbuto,            // 本部棟タブ（大学行きのみ）
 }
 
 class BusEntry {

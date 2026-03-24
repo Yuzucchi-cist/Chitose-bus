@@ -60,12 +60,12 @@ final _mockResponse = ScheduleResponse(
       ),
       BusEntry(
         time: '11:00',
-        direction: BusDirection.toHonbuto,
+        direction: BusDirection.fromHonbuto,
         destination: '千歳科技大',
       ),
       BusEntry(
         time: '23:59',
-        direction: BusDirection.toHonbuto,
+        direction: BusDirection.fromHonbuto,
         destination: '千歳科技大',
       ),
     ],

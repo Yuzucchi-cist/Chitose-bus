@@ -127,7 +127,7 @@ class _ScheduleRowState extends State<_ScheduleRow> {
     BusDirection.fromMinamiChitose:     ['kenkyuto', 'honbuto'],
     BusDirection.fromKenkyutoToHonbuto: ['honbuto'],
     BusDirection.fromKenkyutoToStation: ['minamiChitose', 'chitose'],
-    BusDirection.toHonbuto:             ['honbuto'],
+    BusDirection.fromHonbuto:           ['honbuto'],
   };
 
   List<Widget> _buildArrivalRows() {

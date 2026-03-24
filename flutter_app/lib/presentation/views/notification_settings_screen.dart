@@ -13,7 +13,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
     BusDirection.fromMinamiChitose: '南千歳発',
     BusDirection.fromKenkyutoToHonbuto: '研究棟発 → 本部棟',
     BusDirection.fromKenkyutoToStation: '研究棟発 → 千歳駅',
-    BusDirection.toHonbuto: '本部棟着（大学行き）',
+    BusDirection.fromHonbuto: '本部棟発',
   };
 
   @override

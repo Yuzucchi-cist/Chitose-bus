@@ -65,7 +65,7 @@ void main() {
           ],
         );
 
-        final result = timetable.nextBus(BusDirection.toHonbuto, now: fixedNow);
+        final result = timetable.nextBus(BusDirection.fromHonbuto, now: fixedNow);
         expect(result, isNull);
       });
 
@@ -153,7 +153,7 @@ void main() {
           ],
         );
 
-        final result = timetable.todayBuses(BusDirection.toHonbuto);
+        final result = timetable.todayBuses(BusDirection.fromHonbuto);
         expect(result, isEmpty);
       });
 

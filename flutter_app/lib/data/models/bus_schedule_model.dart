@@ -52,7 +52,7 @@ extension BusEntryModelMapper on BusEntryModel {
           'from_minami_chitose' => BusDirection.fromMinamiChitose,
           'from_kenkyuto_to_honbuto' => BusDirection.fromKenkyutoToHonbuto,
           'from_kenkyuto_to_station' => BusDirection.fromKenkyutoToStation,
-          'to_honbuto' => BusDirection.toHonbuto,
+          'from_honbuto' => BusDirection.fromHonbuto,
           _ => BusDirection.fromChitose,
         },
         destination: destination,

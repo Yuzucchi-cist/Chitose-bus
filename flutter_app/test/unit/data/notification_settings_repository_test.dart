@@ -36,7 +36,7 @@ void main() {
       await repo.save(const NotificationSettings(
         enabled: true,
         minutesBefore: 10,
-        direction: BusDirection.toHonbuto,
+        direction: BusDirection.fromHonbuto,
       ));
       // direction なし で上書き
       await repo.save(const NotificationSettings(enabled: false));
