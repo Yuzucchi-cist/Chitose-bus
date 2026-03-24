@@ -130,6 +130,11 @@ class _ScheduleRowState extends State<_ScheduleRow> {
     BusDirection.fromHonbuto:           ['honbuto'],
   };
 
+  bool _shouldShowRouteBadge(BusDirection direction) {
+    return direction == BusDirection.fromChitose ||
+        direction == BusDirection.fromMinamiChitose;
+  }
+
   List<Widget> _buildArrivalRows() {
     final order = _arrivalOrder[widget.bus.direction] ?? [];
     return order
@@ -207,6 +212,20 @@ class _ScheduleRowState extends State<_ScheduleRow> {
                   style:
                       TextStyle(color: textColor, fontSize: 14, letterSpacing: 1),
                 ),
+                if (widget.bus.routeNumber != null && _shouldShowRouteBadge(widget.bus.direction)) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: textColor.withValues(alpha: 0.6)),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '系統${widget.bus.routeNumber}',
+                      style: TextStyle(color: textColor, fontSize: 11),
+                    ),
+                  ),
+                ],
                 if (widget.isNext) ...[
                   const Spacer(),
                   const Text(
