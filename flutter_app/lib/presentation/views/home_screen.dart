@@ -144,12 +144,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         ),
         data: (response) {
-          // Schedule notifications when timetable data is available
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref
-                .read(notificationSettingsProvider.notifier)
-                .scheduleForTimetable(response.current);
-          });
           return TabBarView(
             controller: _tabController,
             children: [
