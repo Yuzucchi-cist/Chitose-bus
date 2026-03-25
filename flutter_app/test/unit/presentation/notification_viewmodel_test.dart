@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:chitose_bus/domain/entities/bus_schedule.dart';
@@ -140,6 +142,12 @@ class _FakeScheduleViewModel extends ScheduleViewModel {
   Future<ScheduleResponse> build() async => _response;
 }
 
+/// scheduleViewModelProvider が永遠にロード中のままのスタブ
+class _FakeLoadingScheduleViewModel extends ScheduleViewModel {
+  @override
+  Future<ScheduleResponse> build() => Completer<ScheduleResponse>().future;
+}
+
 /// fromChitose と fromHonbuto が混在する BusTimetable
 BusTimetable mixedDirectionTimetable() {
   final now = DateTime.now();
@@ -251,6 +259,35 @@ void main() {
             reason: 'tracked 便のみスケジュールされるべき（direction ベースの重複なし）');
         expect(service.scheduledCalls.first.bus, equals(futureBus));
         expect(service.scheduledCalls.first.settings.minutesBefore, equals(5));
+      });
+
+      test('timetable 未ロード: scheduledBusKeys があっても scheduleNotification は呼ばれない',
+          () async {
+        final service = FakeNotificationService();
+        final repo = FakeNotificationSettingsRepository(
+          NotificationSettings(
+            enabled: true,
+            scheduledBusKeys: {'fromChitose_12:00'},
+          ),
+        );
+        final container = ProviderContainer(
+          overrides: [
+            notificationServiceProvider.overrideWithValue(service),
+            notificationSettingsRepositoryProvider.overrideWithValue(repo),
+            scheduleViewModelProvider
+                .overrideWith(() => _FakeLoadingScheduleViewModel()),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(notificationSettingsProvider.future);
+
+        final current = container.read(notificationSettingsProvider).value!;
+        await container
+            .read(notificationSettingsProvider.notifier)
+            .saveSettings(current);
+
+        expect(service.scheduledCalls, isEmpty,
+            reason: 'timetable 未ロードのとき _rescheduleTrackedBuses は何もしない');
       });
     });
 

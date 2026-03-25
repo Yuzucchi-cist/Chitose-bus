@@ -34,14 +34,6 @@ void main() {
       expect(a.hashCode, equals(b.hashCode));
     });
 
-    test('direction フィールドが存在しない', () {
-      // direction フィールドが削除されていることを確認
-      final s = NotificationSettings(enabled: true);
-      // direction フィールドがないため enabled/minutesBefore/scheduledBusKeys のみで等値判定
-      final s2 = NotificationSettings(enabled: true);
-      expect(s, equals(s2));
-    });
-
     group('scheduledBusKeys', () {
       test('デフォルト値は空の Set', () {
         final s = NotificationSettings();
