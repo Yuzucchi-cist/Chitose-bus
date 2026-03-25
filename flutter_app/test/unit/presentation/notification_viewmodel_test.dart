@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:chitose_bus/domain/entities/bus_schedule.dart';
@@ -142,12 +140,6 @@ class _FakeScheduleViewModel extends ScheduleViewModel {
   Future<ScheduleResponse> build() async => _response;
 }
 
-/// scheduleViewModelProvider が永遠にロード中のままのスタブ
-class _FakeLoadingScheduleViewModel extends ScheduleViewModel {
-  @override
-  Future<ScheduleResponse> build() => Completer<ScheduleResponse>().future;
-}
-
 /// fromChitose と fromHonbuto が混在する BusTimetable
 BusTimetable mixedDirectionTimetable() {
   final now = DateTime.now();
@@ -211,10 +203,7 @@ void main() {
 
         await container
             .read(notificationSettingsProvider.notifier)
-            .saveSettings(NotificationSettings(
-              enabled: true,
-              direction: BusDirection.fromChitose,
-            ));
+            .saveSettings(NotificationSettings(enabled: true));
 
         expect(service.cancelAllCount, 0,
             reason: 'direction ベース削除後は cancelAll を呼ばない');
@@ -255,10 +244,7 @@ void main() {
         final current = container.read(notificationSettingsProvider).value!;
         await container
             .read(notificationSettingsProvider.notifier)
-            .saveSettings(current.copyWith(
-              minutesBefore: 5,
-              direction: BusDirection.fromChitose,
-            ));
+            .saveSettings(current.copyWith(minutesBefore: 5));
 
         // direction ベース削除後は tracked 便のみ → 1件
         expect(service.scheduledCalls.length, equals(1),
@@ -329,10 +315,7 @@ void main() {
         final service = FakeNotificationService(permissionGranted: true);
         final container = makeContainer(
           service: service,
-          initialSettings: NotificationSettings(
-            enabled: false,
-            direction: BusDirection.fromChitose,
-          ),
+          initialSettings: NotificationSettings(enabled: false),
         );
         addTearDown(container.dispose);
         await awaitProviders(container);
@@ -351,10 +334,7 @@ void main() {
         final service = FakeNotificationService(permissionGranted: false);
         final container = makeContainer(
           service: service,
-          initialSettings: NotificationSettings(
-            enabled: false,
-            direction: BusDirection.fromChitose,
-          ),
+          initialSettings: NotificationSettings(enabled: false),
         );
         addTearDown(container.dispose);
         await awaitProviders(container);
