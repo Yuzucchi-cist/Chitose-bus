@@ -5,6 +5,7 @@ import '../../data/services/local_notification_service.dart';
 import '../../domain/entities/bus_schedule.dart';
 import '../../domain/entities/notification_settings.dart';
 import '../../domain/services/notification_service.dart';
+import 'schedule_viewmodel.dart';
 
 final notificationServiceProvider = Provider<NotificationService>(
   (ref) => LocalNotificationService.instance,
@@ -32,6 +33,7 @@ class NotificationSettingsNotifier
     final repo = ref.read(notificationSettingsRepositoryProvider);
     await repo.save(settings);
     state = AsyncData(settings);
+    await _rescheduleIfNeeded(settings);
   }
 
   /// 通知を有効にする。権限がなければリクエストし、拒否された場合は enabled=false のまま保存する。
@@ -39,6 +41,23 @@ class NotificationSettingsNotifier
     final service = ref.read(notificationServiceProvider);
     final granted = await service.requestPermission();
     await saveSettings(current.copyWith(enabled: granted));
+  }
+
+  /// 設定変更後に通知を再スケジュールする。
+  /// enabled=false または direction=null の場合は既存の通知をすべてキャンセルする。
+  Future<void> _rescheduleIfNeeded(NotificationSettings settings) async {
+    final service = ref.read(notificationServiceProvider);
+    if (!settings.enabled || settings.direction == null) {
+      await service.cancelAll();
+      return;
+    }
+    final timetable =
+        ref.read(scheduleViewModelProvider).valueOrNull?.current;
+    if (timetable == null) {
+      await service.cancelAll();
+      return;
+    }
+    await scheduleForTimetable(timetable);
   }
 
   Future<void> scheduleForTimetable(BusTimetable timetable) async {
