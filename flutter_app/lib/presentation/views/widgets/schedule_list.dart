@@ -167,18 +167,13 @@ class _ScheduleRowState extends ConsumerState<_ScheduleRow> {
 
     final isScheduled = settings.scheduledBusKeys
         .contains(NotificationSettingsNotifier.busKey(widget.bus));
-    // isNext 行の背景色 0xFF00FF88 とベル選択色が同一になるため、
-    // isNext のときは NEXT テキストと同じ 0xFF0A0A0A を使う
-    final bellColor = isScheduled
-        ? (widget.isNext ? const Color(0xFF0A0A0A) : const Color(0xFF00FF88))
-        : const Color(0xFF888888);
     return IconButton(
       onPressed: () => ref
           .read(notificationSettingsProvider.notifier)
           .toggleBusNotification(widget.bus),
       icon: Icon(
-        isScheduled ? Icons.notifications : Icons.notifications_outlined,
-        color: bellColor,
+        isScheduled ? Icons.notifications : Icons.notifications_off_outlined,
+        color: const Color(0xFF888888),
         size: 24,
       ),
       padding: EdgeInsets.zero,
