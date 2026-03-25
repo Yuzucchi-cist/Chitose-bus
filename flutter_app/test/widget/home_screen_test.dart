@@ -216,7 +216,8 @@ void main() {
       expect(vm.refreshCalled, isTrue);
     });
 
-    testWidgets('土曜日のdata状態: 土日バナーが表示される', (tester) async {
+    // 市路線バスは土日も一部運行するためバナーは現在非表示（WeekendWarningBanner._enabled = false）
+    testWidgets('土曜日のdata状態: 土日バナーが表示されない（現在無効化中）', (tester) async {
       // 2024-01-06 = Saturday
       final saturday = DateTime(2024, 1, 6, 9, 0);
       await tester.pumpWidget(
@@ -233,7 +234,7 @@ void main() {
 
       expect(
         find.text('土日祝日はバスが運行していない場合があります'),
-        findsWidgets,
+        findsNothing,
       );
     });
 

@@ -75,21 +75,37 @@ class _ScheduleListState extends ConsumerState<ScheduleList> {
         // maxHeight が有限 = Expanded 等で有界な高さが与えられている（_DirectionTab）。
         // maxHeight が無限大 = SingleChildScrollView 配下（_KenkyutoTab・BottomSheet 等）。
         _isBounded = constraints.maxHeight.isFinite;
-        return ListView.builder(
-          shrinkWrap: !_isBounded,
-          physics: _isBounded ? null : const NeverScrollableScrollPhysics(),
-          itemCount: buses.length,
-          itemBuilder: (context, index) {
-            final bus = buses[index];
-            final isPast = bus.minutesFromNow(now: now) < 0;
-            final isNext = index == nextBusIndex;
-            return _ScheduleRow(
-              key: isNext ? _nextBusKey : null,
-              bus: bus,
-              isPast: isPast,
-              isNext: isNext,
-            );
-          },
+
+        final rows = List.generate(buses.length, (index) {
+          final bus = buses[index];
+          final isPast = bus.minutesFromNow(now: now) < 0;
+          final isNext = index == nextBusIndex;
+          return _ScheduleRow(
+            key: isNext ? _nextBusKey : null,
+            bus: bus,
+            isPast: isPast,
+            isNext: isNext,
+          );
+        });
+
+        if (_isBounded) {
+          // bounded 時は SingleChildScrollView + Column を使う。
+          // ListView（SliverList）はビューポート外のアイテムをエレメントツリーに
+          // 追加しないため、NEXT が画面外の場合 _nextBusKey.currentContext が null に
+          // なり Scrollable.ensureVisible が機能しない。
+          // Column は全アイテムをツリーに保持するためこの問題が発生しない。
+          // スケジュール件数は最大でも数十件程度なので性能問題はない。
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: rows,
+            ),
+          );
+        }
+        return ListView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: rows,
         );
       },
     );
@@ -122,16 +138,28 @@ class _ScheduleRowState extends State<_ScheduleRow> {
     'chitose': '千歳駅',
   };
 
-  static const _arrivalOrder = {
-    BusDirection.fromChitose:           ['kenkyuto', 'honbuto'],
-    BusDirection.fromMinamiChitose:     ['kenkyuto', 'honbuto'],
-    BusDirection.fromKenkyutoToHonbuto: ['honbuto'],
-    BusDirection.fromKenkyutoToStation: ['minamiChitose', 'chitose'],
-    BusDirection.fromHonbuto:           ['kenkyuto', 'minamiChitose', 'chitose'],
-  };
+  List<String> _getArrivalOrder(BusEntry entry) {
+    final isRoute2 = entry.routeLabel == '直通';
+    switch (entry.direction) {
+      case BusDirection.fromChitose:
+        return isRoute2
+            ? ['kenkyuto', 'honbuto']
+            : ['minamiChitose', 'kenkyuto', 'honbuto'];
+      case BusDirection.fromMinamiChitose:
+        return ['kenkyuto', 'honbuto'];
+      case BusDirection.fromKenkyutoToHonbuto:
+        return ['honbuto'];
+      case BusDirection.fromKenkyutoToStation:
+        return isRoute2 ? ['chitose'] : ['minamiChitose', 'chitose'];
+      case BusDirection.fromHonbuto:
+        return isRoute2
+            ? ['kenkyuto', 'chitose']
+            : ['kenkyuto', 'minamiChitose', 'chitose'];
+    }
+  }
 
   List<Widget> _buildArrivalRows() {
-    final order = _arrivalOrder[widget.bus.direction] ?? [];
+    final order = _getArrivalOrder(widget.bus);
     return order
         .where((key) => widget.bus.arrivals.containsKey(key))
         .map((key) => Padding(
@@ -201,7 +229,29 @@ class _ScheduleRowState extends State<_ScheduleRow> {
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
+                if (widget.bus.routeLabel != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: widget.isNext
+                            ? const Color(0xFF0A0A0A)
+                            : const Color(0xFF666666),
+                      ),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: Text(
+                      widget.bus.routeLabel!,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 10,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Text(
                   widget.bus.destination,
                   style:

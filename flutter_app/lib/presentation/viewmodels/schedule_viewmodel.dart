@@ -4,10 +4,11 @@ import '../../core/constants/app_constants.dart';
 import '../../data/repositories/schedule_repository_impl.dart';
 import '../../data/sources/schedule_remote_source.dart';
 import '../../domain/entities/bus_schedule.dart';
+import '../../domain/repositories/schedule_repository.dart';
 
 // ----- Providers -----
 
-final scheduleRepositoryProvider = Provider((ref) {
+final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) {
   final source = ScheduleRemoteSource(endpointUrl: AppConstants.gasEndpointUrl);
   return ScheduleRepositoryImpl(remoteSource: source);
 });

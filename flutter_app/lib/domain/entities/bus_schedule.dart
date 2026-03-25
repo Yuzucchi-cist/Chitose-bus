@@ -12,12 +12,28 @@ class BusEntry {
     required this.direction,
     required this.destination,
     this.arrivals = const {},
+    this.routeLabel,
+    this.platformNumber,
+    this.weekdayOnly = false,
+    this.weekendOnly = false,
   });
 
   final String time; // "HH:MM"
   final BusDirection direction;
   final String destination;
   final Map<String, String> arrivals;
+  final String? routeLabel;
+  final String? platformNumber;
+  final bool weekdayOnly;
+  final bool weekendOnly;
+
+  bool isRunningToday(DateTime now) {
+    final weekday = now.weekday;
+    final isWeekend = weekday == DateTime.saturday || weekday == DateTime.sunday;
+    if (isWeekend && weekdayOnly) return false;
+    if (!isWeekend && weekendOnly) return false;
+    return true;
+  }
 
   DateTime toDateTimeToday({DateTime? now}) {
     final base = now ?? DateTime.now();
@@ -53,13 +69,23 @@ class BusTimetable {
 
   BusEntry? nextBus(BusDirection direction, {DateTime? now}) {
     final current = now ?? DateTime.now();
-    return schedules
-        .where((e) => e.direction == direction && e.toDateTimeToday(now: current).isAfter(current))
-        .firstOrNull;
+    final candidates = schedules
+        .where((e) =>
+            e.direction == direction &&
+            e.isRunningToday(current) &&
+            e.toDateTimeToday(now: current).isAfter(current))
+        .toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
+    return candidates.firstOrNull;
   }
 
-  List<BusEntry> todayBuses(BusDirection direction) {
-    return schedules.where((e) => e.direction == direction).toList();
+  List<BusEntry> todayBuses(BusDirection direction, {DateTime? now}) {
+    final current = now ?? DateTime.now();
+    final filtered = schedules
+        .where((e) => e.direction == direction && e.isRunningToday(current))
+        .toList();
+    filtered.sort((a, b) => a.time.compareTo(b.time));
+    return filtered;
   }
 }
 
