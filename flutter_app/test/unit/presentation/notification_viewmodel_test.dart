@@ -459,5 +459,164 @@ void main() {
         expect(saved.enabled, isFalse);
       });
     });
+
+    group('toggleBusNotification()', () {
+      // 未来時刻のバスをヘルパーで生成
+      BusEntry futureBusEntry() {
+        final now = DateTime.now();
+        final future = now.add(const Duration(hours: 2));
+        String fmt(DateTime dt) =>
+            '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+        return BusEntry(
+          time: fmt(future),
+          direction: BusDirection.fromChitose,
+          destination: '千歳駅',
+        );
+      }
+
+      test('OFF→ON: scheduleNotification が呼ばれ scheduledBusKeys にキーが追加される', () async {
+        final service = FakeNotificationService();
+        final bus = futureBusEntry();
+        final container = makeContainer(
+          service: service,
+          initialSettings: NotificationSettings(enabled: true, minutesBefore: 10),
+        );
+        addTearDown(container.dispose);
+        await awaitProviders(container);
+
+        await container
+            .read(notificationSettingsProvider.notifier)
+            .toggleBusNotification(bus);
+
+        expect(service.scheduledCalls.length, equals(1),
+            reason: 'scheduleNotification が1回呼ばれるべき');
+        expect(service.scheduledCalls.first.bus, equals(bus));
+        final saved = container.read(notificationSettingsProvider).value!;
+        expect(saved.scheduledBusKeys, contains(NotificationSettingsNotifier.busKey(bus)));
+      });
+
+      test('ON→OFF: cancel(id) が呼ばれ scheduledBusKeys からキーが削除される', () async {
+        final service = FakeNotificationService();
+        final bus = futureBusEntry();
+        final key = NotificationSettingsNotifier.busKey(bus);
+        final container = makeContainer(
+          service: service,
+          initialSettings: NotificationSettings(
+            enabled: true,
+            minutesBefore: 10,
+            scheduledBusKeys: {key},
+          ),
+        );
+        addTearDown(container.dispose);
+        await awaitProviders(container);
+
+        await container
+            .read(notificationSettingsProvider.notifier)
+            .toggleBusNotification(bus);
+
+        final expectedId = NotificationService.busNotificationId(bus);
+        expect(service.canceledIds, contains(expectedId),
+            reason: 'cancel(id) が呼ばれるべき');
+        expect(service.scheduledCalls, isEmpty,
+            reason: 'scheduleNotification は呼ばれるべきでない');
+        final saved = container.read(notificationSettingsProvider).value!;
+        expect(saved.scheduledBusKeys, isNot(contains(key)));
+      });
+
+      test('OFF→ON: 過去の便は scheduleNotification が呼ばれない', () async {
+        final service = FakeNotificationService();
+        // 過去時刻のバス
+        final now = DateTime.now();
+        final past = now.subtract(const Duration(hours: 1));
+        String fmt(DateTime dt) =>
+            '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+        final pastBus = BusEntry(
+          time: fmt(past),
+          direction: BusDirection.fromChitose,
+          destination: '千歳駅',
+        );
+        final container = makeContainer(
+          service: service,
+          initialSettings: NotificationSettings(enabled: true, minutesBefore: 10),
+        );
+        addTearDown(container.dispose);
+        await awaitProviders(container);
+
+        await container
+            .read(notificationSettingsProvider.notifier)
+            .toggleBusNotification(pastBus);
+
+        expect(service.scheduledCalls, isEmpty,
+            reason: '過去の便は scheduleNotification が呼ばれるべきでない');
+        final saved = container.read(notificationSettingsProvider).value!;
+        expect(saved.scheduledBusKeys, contains(NotificationSettingsNotifier.busKey(pastBus)),
+            reason: 'キーは追加されるべき');
+      });
+
+      test('enabled=false のとき ON にしても scheduleNotification は呼ばれない', () async {
+        final service = FakeNotificationService();
+        final bus = futureBusEntry();
+        final container = makeContainer(
+          service: service,
+          initialSettings: NotificationSettings(enabled: false),
+        );
+        addTearDown(container.dispose);
+        await awaitProviders(container);
+
+        await container
+            .read(notificationSettingsProvider.notifier)
+            .toggleBusNotification(bus);
+
+        expect(service.scheduledCalls, isEmpty,
+            reason: 'enabled=false では scheduleNotification は呼ばれるべきでない');
+        final saved = container.read(notificationSettingsProvider).value!;
+        expect(saved.scheduledBusKeys, contains(NotificationSettingsNotifier.busKey(bus)),
+            reason: 'キーは追加されるべき');
+      });
+
+      test('minutesBefore 変更後の saveSettings: 選択済み便が再スケジュールされる', () async {
+        final service = FakeNotificationService();
+        // timetable に含まれる未来バスを使ってキーを作る
+        final now = DateTime.now();
+        final futureTime = now.add(const Duration(hours: 2));
+        String fmt(DateTime dt) =>
+            '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+        final futureBus = BusEntry(
+          time: fmt(futureTime),
+          direction: BusDirection.fromChitose,
+          destination: '千歳駅',
+        );
+        final key = NotificationSettingsNotifier.busKey(futureBus);
+        final timetable = BusTimetable(
+          validFrom: '2026-01-01',
+          validTo: '2026-12-31',
+          schedules: [futureBus],
+        );
+        final container = makeContainer(
+          service: service,
+          timetable: timetable,
+          initialSettings: NotificationSettings(
+            enabled: true,
+            minutesBefore: 10,
+            scheduledBusKeys: {key},
+          ),
+        );
+        addTearDown(container.dispose);
+        await awaitProviders(container);
+
+        final current = container.read(notificationSettingsProvider).value!;
+        await container
+            .read(notificationSettingsProvider.notifier)
+            .saveSettings(current.copyWith(minutesBefore: 5));
+
+        final trackedCalls = service.scheduledCalls
+            .where((c) => c.bus.time == futureBus.time &&
+                          c.bus.direction == futureBus.direction)
+            .toList();
+        expect(trackedCalls, isNotEmpty,
+            reason: '選択済み便が再スケジュールされるべき');
+        expect(trackedCalls.first.settings.minutesBefore, equals(5));
+      });
+    });
   });
 }
