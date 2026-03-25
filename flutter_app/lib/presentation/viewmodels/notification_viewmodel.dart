@@ -5,6 +5,7 @@ import '../../data/services/local_notification_service.dart';
 import '../../domain/entities/bus_schedule.dart';
 import '../../domain/entities/notification_settings.dart';
 import '../../domain/services/notification_service.dart';
+import 'schedule_viewmodel.dart';
 
 final notificationServiceProvider = Provider<NotificationService>(
   (ref) => LocalNotificationService.instance,
@@ -32,6 +33,7 @@ class NotificationSettingsNotifier
     final repo = ref.read(notificationSettingsRepositoryProvider);
     await repo.save(settings);
     state = AsyncData(settings);
+    await _rescheduleIfNeeded(settings);
   }
 
   /// 通知を有効にする。権限がなければリクエストし、拒否された場合は enabled=false のまま保存する。
@@ -41,10 +43,35 @@ class NotificationSettingsNotifier
     await saveSettings(current.copyWith(enabled: granted));
   }
 
-  Future<void> scheduleForTimetable(BusTimetable timetable) async {
-    final settingsState = state;
-    if (settingsState is! AsyncData<NotificationSettings>) return;
-    final settings = settingsState.value;
+  /// 設定変更後に通知を再スケジュールする。
+  /// enabled=false または direction=null の場合は既存の通知をすべてキャンセルする。
+  Future<void> _rescheduleIfNeeded(NotificationSettings settings) async {
+    final service = ref.read(notificationServiceProvider);
+    if (!settings.enabled || settings.direction == null) {
+      await service.cancelAll();
+      return;
+    }
+    final timetable =
+        ref.read(scheduleViewModelProvider).valueOrNull?.current;
+    if (timetable == null) {
+      await service.cancelAll();
+      return;
+    }
+    await scheduleForTimetable(timetable, settingsOverride: settings);
+  }
+
+  /// [settingsOverride] が指定された場合はその設定を使用し、
+  /// 省略時は現在の [state] から設定を読み込む。
+  Future<void> scheduleForTimetable(BusTimetable timetable,
+      {NotificationSettings? settingsOverride}) async {
+    final NotificationSettings settings;
+    if (settingsOverride != null) {
+      settings = settingsOverride;
+    } else {
+      final settingsState = state;
+      if (settingsState is! AsyncData<NotificationSettings>) return;
+      settings = settingsState.value;
+    }
     if (!settings.enabled || settings.direction == null) return;
 
     final service = ref.read(notificationServiceProvider);
