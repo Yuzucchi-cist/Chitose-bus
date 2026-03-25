@@ -42,7 +42,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         backgroundColor: const Color(0xFF0A0A0A),
         foregroundColor: const Color(0xFF00FF88),
         title: const Text(
-          'CIST シャトルバス',
+          'Kagi-Bus',
           style: TextStyle(
             color: Color(0xFF00FF88),
             fontSize: 18,
