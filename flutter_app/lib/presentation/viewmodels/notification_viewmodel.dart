@@ -66,8 +66,9 @@ class NotificationSettingsNotifier
       final newSettings = settings.copyWith(scheduledBusKeys: newKeys);
       await repo.save(newSettings);
       state = AsyncData(newSettings);
-      if (settings.enabled) {
-        await service.scheduleNotification(bus, settings);
+      if (newSettings.enabled &&
+          bus.toDateTimeToday().isAfter(DateTime.now())) {
+        await service.scheduleNotification(bus, newSettings);
       }
     }
   }
