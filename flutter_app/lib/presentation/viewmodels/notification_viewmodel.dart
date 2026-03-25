@@ -34,6 +34,7 @@ class NotificationSettingsNotifier
     await repo.save(settings);
     state = AsyncData(settings);
     await _rescheduleIfNeeded(settings);
+    await _rescheduleTrackedBuses();
   }
 
   /// 通知を有効にする。権限がなければリクエストし、拒否された場合は enabled=false のまま保存する。
@@ -41,6 +42,54 @@ class NotificationSettingsNotifier
     final service = ref.read(notificationServiceProvider);
     final granted = await service.requestPermission();
     await saveSettings(current.copyWith(enabled: granted));
+  }
+
+  static String busKey(BusEntry bus) => '${bus.direction.name}_${bus.time}';
+
+  Future<void> toggleBusNotification(BusEntry bus) async {
+    final settingsState = state;
+    if (settingsState is! AsyncData<NotificationSettings>) return;
+    final settings = settingsState.value;
+
+    final key = busKey(bus);
+    final repo = ref.read(notificationSettingsRepositoryProvider);
+    final service = ref.read(notificationServiceProvider);
+
+    if (settings.scheduledBusKeys.contains(key)) {
+      final newKeys = {...settings.scheduledBusKeys}..remove(key);
+      final newSettings = settings.copyWith(scheduledBusKeys: newKeys);
+      await repo.save(newSettings);
+      state = AsyncData(newSettings);
+      await service.cancel(NotificationService.busNotificationId(bus));
+    } else {
+      final newKeys = {...settings.scheduledBusKeys, key};
+      final newSettings = settings.copyWith(scheduledBusKeys: newKeys);
+      await repo.save(newSettings);
+      state = AsyncData(newSettings);
+      if (settings.enabled) {
+        await service.scheduleNotification(bus, settings);
+      }
+    }
+  }
+
+  Future<void> _rescheduleTrackedBuses() async {
+    final settingsState = state;
+    if (settingsState is! AsyncData<NotificationSettings>) return;
+    final settings = settingsState.value;
+    if (!settings.enabled || settings.scheduledBusKeys.isEmpty) return;
+
+    final timetable =
+        ref.read(scheduleViewModelProvider).valueOrNull?.current;
+    if (timetable == null) return;
+
+    final service = ref.read(notificationServiceProvider);
+    final now = DateTime.now();
+    for (final bus in timetable.schedules) {
+      if (settings.scheduledBusKeys.contains(busKey(bus)) &&
+          bus.toDateTimeToday().isAfter(now)) {
+        await service.scheduleNotification(bus, settings);
+      }
+    }
   }
 
   /// 設定変更後に通知を再スケジュールする。
