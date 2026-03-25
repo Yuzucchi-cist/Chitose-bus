@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/bus_schedule.dart';
+import '../../../domain/entities/notification_settings.dart';
+import '../../viewmodels/notification_viewmodel.dart';
 import '../../viewmodels/schedule_viewmodel.dart';
 
 class ScheduleList extends ConsumerStatefulWidget {
@@ -112,7 +114,7 @@ class _ScheduleListState extends ConsumerState<ScheduleList> {
   }
 }
 
-class _ScheduleRow extends StatefulWidget {
+class _ScheduleRow extends ConsumerStatefulWidget {
   const _ScheduleRow({
     super.key,
     required this.bus,
@@ -125,10 +127,10 @@ class _ScheduleRow extends StatefulWidget {
   final bool isNext;
 
   @override
-  State<_ScheduleRow> createState() => _ScheduleRowState();
+  ConsumerState<_ScheduleRow> createState() => _ScheduleRowState();
 }
 
-class _ScheduleRowState extends State<_ScheduleRow> {
+class _ScheduleRowState extends ConsumerState<_ScheduleRow> {
   bool _expanded = false;
 
   static const _stopLabels = {
@@ -156,6 +158,30 @@ class _ScheduleRowState extends State<_ScheduleRow> {
             ? ['kenkyuto', 'chitose']
             : ['kenkyuto', 'minamiChitose', 'chitose'];
     }
+  }
+
+  Widget _buildBellIcon() {
+    if (widget.isPast) return const SizedBox.shrink();
+    final settings = ref.watch(notificationSettingsProvider).valueOrNull;
+    if (settings == null || !settings.enabled) return const SizedBox.shrink();
+
+    final isScheduled = settings.scheduledBusKeys
+        .contains(NotificationSettingsNotifier.busKey(widget.bus));
+    return GestureDetector(
+      onTap: () => ref
+          .read(notificationSettingsProvider.notifier)
+          .toggleBusNotification(widget.bus),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: Icon(
+          isScheduled ? Icons.notifications : Icons.notifications_outlined,
+          color: isScheduled
+              ? const Color(0xFF00FF88)
+              : const Color(0xFF888888),
+          size: 20,
+        ),
+      ),
+    );
   }
 
   List<Widget> _buildArrivalRows() {
@@ -257,8 +283,8 @@ class _ScheduleRowState extends State<_ScheduleRow> {
                   style:
                       TextStyle(color: textColor, fontSize: 14, letterSpacing: 1),
                 ),
-                if (widget.isNext) ...[
-                  const Spacer(),
+                const Spacer(),
+                if (widget.isNext)
                   const Text(
                     '◀ NEXT',
                     style: TextStyle(
@@ -268,7 +294,7 @@ class _ScheduleRowState extends State<_ScheduleRow> {
                       letterSpacing: 1,
                     ),
                   ),
-                ],
+                _buildBellIcon(),
               ],
             ),
             if (_expanded && hasArrivals) ..._buildArrivalRows(),

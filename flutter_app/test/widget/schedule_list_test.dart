@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:chitose_bus/domain/entities/bus_schedule.dart';
+import 'package:chitose_bus/domain/entities/notification_settings.dart';
+import 'package:chitose_bus/presentation/viewmodels/notification_viewmodel.dart';
 import 'package:chitose_bus/presentation/views/widgets/schedule_list.dart';
 
 import '../helpers/test_theme.dart';
@@ -10,6 +12,25 @@ Widget _wrap(Widget child) => ProviderScope(
       overrides: [countdownOverride()],
       child: MaterialApp(home: Scaffold(body: child)),
     );
+
+Widget _wrapWithNotification(Widget child, NotificationSettings settings) =>
+    ProviderScope(
+      overrides: [
+        countdownOverride(),
+        notificationSettingsProvider.overrideWith(
+          () => _FakeNotificationSettingsNotifier(settings),
+        ),
+      ],
+      child: MaterialApp(home: Scaffold(body: child)),
+    );
+
+class _FakeNotificationSettingsNotifier extends NotificationSettingsNotifier {
+  _FakeNotificationSettingsNotifier(this._settings);
+  final NotificationSettings _settings;
+
+  @override
+  Future<NotificationSettings> build() async => _settings;
+}
 
 void main() {
   group('ScheduleList', () {
@@ -211,6 +232,117 @@ void main() {
       await tester.tap(find.text(busTime));
       await tester.pump();
       expect(find.text('研究棟 着'), findsNothing);
+    });
+
+    group('ベルアイコン', () {
+      testWidgets('enabled=true かつ未来便: ベルアイコンが表示される', (tester) async {
+        final busTime = safeFutureHhmm(60);
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-12-31',
+          schedules: [
+            BusEntry(
+                time: busTime,
+                direction: BusDirection.fromChitose,
+                destination: '千歳科技大'),
+          ],
+        );
+        await tester.pumpWidget(_wrapWithNotification(
+          ScheduleList(timetable: timetable, direction: BusDirection.fromChitose),
+          NotificationSettings(enabled: true),
+        ));
+        await tester.pump();
+
+        expect(find.byIcon(Icons.notifications_outlined), findsOneWidget);
+      });
+
+      testWidgets('enabled=false: ベルアイコンが非表示', (tester) async {
+        final busTime = safeFutureHhmm(60);
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-12-31',
+          schedules: [
+            BusEntry(
+                time: busTime,
+                direction: BusDirection.fromChitose,
+                destination: '千歳科技大'),
+          ],
+        );
+        await tester.pumpWidget(_wrapWithNotification(
+          ScheduleList(timetable: timetable, direction: BusDirection.fromChitose),
+          NotificationSettings(enabled: false),
+        ));
+        await tester.pump();
+
+        expect(find.byIcon(Icons.notifications_outlined), findsNothing);
+        expect(find.byIcon(Icons.notifications), findsNothing);
+      });
+
+      testWidgets('過去便: ベルアイコンが非表示', (tester) async {
+        const pastTime = '00:01';
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-12-31',
+          schedules: [
+            BusEntry(
+                time: pastTime,
+                direction: BusDirection.fromChitose,
+                destination: '千歳科技大'),
+          ],
+        );
+        await tester.pumpWidget(_wrapWithNotification(
+          ScheduleList(timetable: timetable, direction: BusDirection.fromChitose),
+          NotificationSettings(enabled: true),
+        ));
+        await tester.pump();
+
+        expect(find.byIcon(Icons.notifications_outlined), findsNothing);
+        expect(find.byIcon(Icons.notifications), findsNothing);
+      });
+
+      testWidgets('選択済み便: グリーン(0xFF00FF88)のベルアイコンが表示される', (tester) async {
+        final busTime = safeFutureHhmm(60);
+        final bus = BusEntry(
+            time: busTime,
+            direction: BusDirection.fromChitose,
+            destination: '千歳科技大');
+        final key = NotificationSettingsNotifier.busKey(bus);
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-12-31',
+          schedules: [bus],
+        );
+        await tester.pumpWidget(_wrapWithNotification(
+          ScheduleList(timetable: timetable, direction: BusDirection.fromChitose),
+          NotificationSettings(enabled: true, scheduledBusKeys: {key}),
+        ));
+        await tester.pump();
+
+        final icon = tester.widget<Icon>(find.byIcon(Icons.notifications));
+        expect(icon.color, const Color(0xFF00FF88));
+      });
+
+      testWidgets('未選択便: グレー(0xFF888888)のベルアイコンが表示される', (tester) async {
+        final busTime = safeFutureHhmm(60);
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-12-31',
+          schedules: [
+            BusEntry(
+                time: busTime,
+                direction: BusDirection.fromChitose,
+                destination: '千歳科技大'),
+          ],
+        );
+        await tester.pumpWidget(_wrapWithNotification(
+          ScheduleList(timetable: timetable, direction: BusDirection.fromChitose),
+          NotificationSettings(enabled: true),
+        ));
+        await tester.pump();
+
+        final icon = tester.widget<Icon>(find.byIcon(Icons.notifications_outlined));
+        expect(icon.color, const Color(0xFF888888));
+      });
     });
 
     testWidgets('arrivalsが空の行をタップ: 何も表示されない', (tester) async {
