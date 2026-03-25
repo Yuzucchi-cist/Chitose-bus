@@ -6,7 +6,7 @@ class NotificationSettings {
     this.minutesBefore = 10,
     this.direction,
     Set<String>? scheduledBusKeys,
-  }) : scheduledBusKeys = scheduledBusKeys ?? {};
+  }) : scheduledBusKeys = Set.unmodifiable(scheduledBusKeys ?? {});
 
   final bool enabled;
   final int minutesBefore;

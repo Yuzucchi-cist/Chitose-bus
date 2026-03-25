@@ -81,6 +81,11 @@ void main() {
         final b = NotificationSettings(scheduledBusKeys: {'toChitose_09:00'});
         expect(a, isNot(equals(b)));
       });
+
+      test('scheduledBusKeys は immutable（外部からの変更が例外を投げる）', () {
+        final s = NotificationSettings(scheduledBusKeys: {'fromChitose_08:30'});
+        expect(() => s.scheduledBusKeys.add('toChitose_09:00'), throwsUnsupportedError);
+      });
     });
   });
 }
