@@ -1,6 +1,6 @@
-# chitose_bus
+# Kagi-Bus
 
-A new Flutter project.
+千歳科学技術大学 バス時刻表アプリ
 
 ## Getting Started
 

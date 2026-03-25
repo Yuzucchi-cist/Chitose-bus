@@ -1,6 +1,6 @@
 {
-    "name": "chitose_bus",
-    "short_name": "chitose_bus",
+    "name": "Kagi-Bus",
+    "short_name": "Kagi-Bus",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

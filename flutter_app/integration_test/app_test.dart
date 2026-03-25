@@ -4,10 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:chitose_bus/domain/entities/bus_schedule.dart';
-import 'package:chitose_bus/domain/repositories/schedule_repository.dart';
-import 'package:chitose_bus/main.dart';
-import 'package:chitose_bus/presentation/viewmodels/schedule_viewmodel.dart';
+import 'package:kagi_bus/domain/entities/bus_schedule.dart';
+import 'package:kagi_bus/domain/repositories/schedule_repository.dart';
+import 'package:kagi_bus/main.dart';
+import 'package:kagi_bus/presentation/viewmodels/schedule_viewmodel.dart';
 
 class MockScheduleRepository extends Mock implements ScheduleRepository {}
 
@@ -93,7 +93,7 @@ Widget _buildApp(MockScheduleRepository repo) {
     overrides: [
       scheduleRepositoryProvider.overrideWithValue(repo),
     ],
-    child: const ChitoseBusApp(),
+    child: const KagiBusApp(),
   );
 }
 
