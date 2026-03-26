@@ -30,18 +30,22 @@ android {
         versionName = flutter.versionName
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "keystore/kagi_bus.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEY_ALIAS") ?: "kagibus"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+    val keystorePath: String? = System.getenv("KEYSTORE_PATH")
+
+    if (keystorePath != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+                keyAlias = System.getenv("KEY_ALIAS") ?: ""
+                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = if (System.getenv("KEYSTORE_PATH") != null) {
+            signingConfig = if (keystorePath != null) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")

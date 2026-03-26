@@ -114,6 +114,10 @@ jobs:
           flutter build apk --release $DART_DEFINE_ARGS
         working-directory: flutter_app
 
+      - name: Cleanup keystore
+        if: always()
+        run: rm -f flutter_app/android/app/keystore/kagi_bus.jks
+
       - name: Rename APK
         run: mv flutter_app/build/app/outputs/flutter-apk/app-release.apk kagi_bus-${{ github.ref_name }}-android.apk
 
