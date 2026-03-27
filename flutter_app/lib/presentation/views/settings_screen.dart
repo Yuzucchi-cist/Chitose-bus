@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_colors_theme.dart';
 import '../viewmodels/app_info_viewmodel.dart';
 import 'bug_report_screen.dart';
 import 'notification_settings_screen.dart';
@@ -18,9 +19,9 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.appColors.background,
         foregroundColor: AppColors.primary,
         title: const Text(
           '設定',
@@ -39,12 +40,12 @@ class SettingsScreen extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.notifications_outlined,
                   color: AppColors.primary),
-              title: const Text(
+              title: Text(
                 '通知設定',
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.appColors.textPrimary),
               ),
-              trailing: const Icon(Icons.chevron_right,
-                  color: AppColors.textDisabled),
+              trailing: Icon(Icons.chevron_right,
+                  color: context.appColors.textDisabled),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -60,43 +61,43 @@ class SettingsScreen extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.bug_report_outlined,
                       color: AppColors.primary),
-                  title: const Text(
+                  title: Text(
                     'バグを報告',
-                    style: TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: context.appColors.textPrimary),
                   ),
-                  trailing: const Icon(Icons.chevron_right,
-                      color: AppColors.textDisabled),
+                  trailing: Icon(Icons.chevron_right,
+                      color: context.appColors.textDisabled),
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (_) => const BugReportScreen()),
                   ),
                 ),
-                const Divider(height: 1, color: AppColors.border),
+                Divider(height: 1, color: context.appColors.border),
                 ListTile(
                   leading: const Icon(Icons.policy_outlined,
                       color: AppColors.primary),
-                  title: const Text(
+                  title: Text(
                     'プライバシーポリシー',
-                    style: TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: context.appColors.textPrimary),
                   ),
-                  trailing: const Icon(Icons.open_in_new,
-                      color: AppColors.textDisabled, size: 18),
+                  trailing: Icon(Icons.open_in_new,
+                      color: context.appColors.textDisabled, size: 18),
                   onTap: () => _launchUrl(AppConstants.privacyPolicyUrl),
                 ),
-                const Divider(height: 1, color: AppColors.border),
+                Divider(height: 1, color: context.appColors.border),
                 ListTile(
                   leading: const Icon(Icons.info_outline,
                       color: AppColors.primary),
-                  title: const Text(
+                  title: Text(
                     'バージョン',
-                    style: TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: context.appColors.textPrimary),
                   ),
                   trailing: ref.watch(packageInfoProvider).when(
                         data: (info) => Text(
-                          info.version,
-                          style:
-                              const TextStyle(color: AppColors.textDisabled),
+                          '${info.version}+${info.buildNumber}',
+                          style: TextStyle(
+                              color: context.appColors.textDisabled),
                         ),
                         loading: () => const SizedBox.shrink(),
                         error: (_, __) => const SizedBox.shrink(),
@@ -139,7 +140,7 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.appColors.border),
         borderRadius: BorderRadius.circular(8),
       ),
       child: child,
