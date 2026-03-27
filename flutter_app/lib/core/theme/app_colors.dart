@@ -6,11 +6,12 @@ class AppColors {
 
   // ブランドカラー
   static const Color primary = Color(0xFFFE9616);
+  static const Color secondary = Color(0xFFFDA02E);
   static const Color onPrimary = Color(0xFF0A0A0A);
 
   // 背景・サーフェス
-  static const Color background = Color(0xFF0A0A0A);
-  static const Color surface = Color(0xFF1A1A1A);
+  static const Color background = Color(0xFF1F1F1F);
+  static const Color surface = Color(0xFF2A2A2A);
   static const Color bottomSheet = Color(0xFF111111);
 
   // テキスト（明→暗の順）

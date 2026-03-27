@@ -221,7 +221,7 @@ class _ScheduleRowState extends ConsumerState<_ScheduleRow> {
 
     if (widget.isNext) {
       textColor = AppColors.onPrimary;
-      bgColor = AppColors.primary;
+      bgColor = AppColors.secondary;
     } else if (widget.isPast) {
       textColor = AppColors.textDisabled;
       bgColor = Colors.transparent;
