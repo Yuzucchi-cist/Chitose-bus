@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_colors_theme.dart';
+import '../viewmodels/app_info_viewmodel.dart';
 import 'bug_report_screen.dart';
 import 'notification_settings_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   Future<void> _launchUrl(String url) async {
@@ -15,7 +17,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: context.appColors.background,
       appBar: AppBar(
@@ -82,6 +84,24 @@ class SettingsScreen extends StatelessWidget {
                   trailing: Icon(Icons.open_in_new,
                       color: context.appColors.textDisabled, size: 18),
                   onTap: () => _launchUrl(AppConstants.privacyPolicyUrl),
+                ),
+                Divider(height: 1, color: context.appColors.border),
+                ListTile(
+                  leading: const Icon(Icons.info_outline,
+                      color: AppColors.primary),
+                  title: Text(
+                    'バージョン',
+                    style: TextStyle(color: context.appColors.textPrimary),
+                  ),
+                  trailing: ref.watch(packageInfoProvider).when(
+                        data: (info) => Text(
+                          '${info.version}+${info.buildNumber}',
+                          style: TextStyle(
+                              color: context.appColors.textDisabled),
+                        ),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
                 ),
               ],
             ),
