@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_colors_theme.dart';
 import '../../domain/entities/bus_schedule.dart';
@@ -477,9 +478,9 @@ class _BannerAdWidgetState extends State<_BannerAdWidget> {
 
   static String get _adUnitId {
     if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/6300978111';
+      return AppConstants.admobAndroidAdUnitId;
     } else {
-      return 'ca-app-pub-3940256099942544/2934735716';
+      return AppConstants.admobIosAdUnitId;
     }
   }
 
