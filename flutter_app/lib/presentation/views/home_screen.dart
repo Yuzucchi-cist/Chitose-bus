@@ -44,19 +44,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Tab _buildTab(String label, int index, int? favoriteTabIndex) {
     final isFavorite = favoriteTabIndex == index;
     return Tab(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
         children: [
-          Text(label),
-          const SizedBox(width: 4),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () =>
-                ref.read(favoriteTabProvider.notifier).toggleFavorite(index),
-            child: Icon(
-              isFavorite ? Icons.star : Icons.star_border,
-              size: 14,
-              color: isFavorite ? AppColors.warning : null,
+          Align(
+            alignment: Alignment.center,
+            child: Text(label),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () =>
+                  ref.read(favoriteTabProvider.notifier).toggleFavorite(index),
+              child: Icon(
+                isFavorite ? Icons.star : Icons.star_border,
+                size: 20,
+                color: isFavorite ? AppColors.warning : null,
+              ),
             ),
           ),
         ],
