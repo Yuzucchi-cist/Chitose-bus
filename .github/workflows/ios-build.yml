@@ -235,18 +235,17 @@ jobs:
             fi
             if [ "$USE_SIGNING" = "true" ]; then
               # Create ExportOptions.plist for flutter build ipa
-              cat > "$GITHUB_WORKSPACE/ExportOptions.plist" <<'EXPORT_PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>method</key>
-    <string>development</string>
-    <key>signingStyle</key>
-    <string>automatic</string>
-</dict>
-</plist>
-EXPORT_PLIST
+              printf '%s\n' \
+                '<?xml version="1.0" encoding="UTF-8"?>' \
+                '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+                '<plist version="1.0">' \
+                '<dict>' \
+                '    <key>method</key>' \
+                '    <string>development</string>' \
+                '    <key>signingStyle</key>' \
+                '    <string>automatic</string>' \
+                '</dict>' \
+                '</plist>' > "$GITHUB_WORKSPACE/ExportOptions.plist"
               flutter build ipa \
                 --export-options-plist="$GITHUB_WORKSPACE/ExportOptions.plist" \
                 $BUILD_MODE_FLAG \
