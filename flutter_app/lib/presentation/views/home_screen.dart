@@ -75,8 +75,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final favoriteTabIndex = favoriteAsync.valueOrNull?.tabIndex;
 
     // お気に入りタブの初回適用（アプリ起動時のみ）
-    if (!_favoriteApplied) {
-      favoriteAsync.whenData((fav) {
+    // build() 内の副作用は ref.listen に委ねる（Riverpod 推奨パターン）
+    ref.listen(favoriteTabProvider, (prev, next) {
+      if (_favoriteApplied) return;
+      next.whenData((fav) {
         _favoriteApplied = true;
         if (fav.hasFavorite) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -84,7 +86,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           });
         }
       });
-    }
+    });
 
     return Scaffold(
       backgroundColor: context.appColors.background,

@@ -15,7 +15,7 @@ final favoriteTabProvider =
 class FavoriteTabNotifier extends AsyncNotifier<FavoriteTab> {
   @override
   Future<FavoriteTab> build() async {
-    final repo = ref.read(favoriteTabRepositoryProvider);
+    final repo = ref.watch(favoriteTabRepositoryProvider);
     return repo.load();
   }
 
