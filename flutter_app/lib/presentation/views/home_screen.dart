@@ -9,6 +9,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_colors_theme.dart';
 import '../../domain/entities/bus_schedule.dart';
+import '../viewmodels/favorite_tab_viewmodel.dart';
 import '../viewmodels/schedule_viewmodel.dart';
 import 'settings_screen.dart';
 import 'widgets/next_bus_display.dart';
@@ -26,6 +27,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _bannerDismissed = false;
+  bool _favoriteApplied = false;
 
   @override
   void initState() {
@@ -39,9 +41,100 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     super.dispose();
   }
 
+  Tab _buildTab(String label, int index, int? favoriteTabIndex) {
+    return Tab(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isFavorite = favoriteTabIndex == index;
+          final tabWidth = constraints.maxWidth;
+
+          // タブ内のラベルスタイルでテキスト幅を計測
+          final textStyle = DefaultTextStyle.of(context).style;
+          final textPainter = TextPainter(
+            text: TextSpan(text: label, style: textStyle),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          final textWidth = textPainter.width;
+
+          const starSize = 20.0;
+          const gap = 4.0;
+
+          Widget starIcon(double size) => GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => ref
+                    .read(favoriteTabProvider.notifier)
+                    .toggleFavorite(index),
+                child: Icon(
+                  isFavorite ? Icons.star : Icons.star_border,
+                  size: size,
+                  color: isFavorite ? AppColors.warning : null,
+                ),
+              );
+
+          // デフォルト: ラベル中央・スター右端（重ならない場合）
+          // 中央テキストの右端 = tabWidth/2 + textWidth/2
+          // スターの左端 = tabWidth - starSize
+          final stackFits =
+              tabWidth / 2 + textWidth / 2 + gap <= tabWidth - starSize;
+          if (stackFits) {
+            return Stack(
+              children: [
+                Align(alignment: Alignment.center, child: Text(label)),
+                Align(
+                    alignment: Alignment.centerRight,
+                    child: starIcon(starSize)),
+              ],
+            );
+          }
+
+          // 横並び（重なる場合）
+          final rowFits = textWidth + gap + starSize <= tabWidth;
+          if (rowFits) {
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(label),
+                const SizedBox(width: gap),
+                starIcon(starSize),
+              ],
+            );
+          }
+
+          // 縮小表示（横並びでも収まらない場合）
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 11)),
+              const SizedBox(width: 2),
+              starIcon(14),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheduleAsync = ref.watch(scheduleViewModelProvider);
+    final favoriteAsync = ref.watch(favoriteTabProvider);
+    final favoriteTabIndex = favoriteAsync.valueOrNull?.tabIndex;
+
+    // お気に入りタブの初回適用（アプリ起動時のみ）
+    // build() 内の副作用は ref.listen に委ねる（Riverpod 推奨パターン）
+    ref.listen(favoriteTabProvider, (prev, next) {
+      if (_favoriteApplied) return;
+      next.whenData((fav) {
+        _favoriteApplied = true;
+        if (fav.hasFavorite) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _tabController.index = fav.tabIndex!;
+          });
+        }
+      });
+    });
 
     return Scaffold(
       backgroundColor: context.appColors.background,
@@ -119,11 +212,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           indicatorColor: AppColors.primary,
           labelColor: AppColors.primary,
           unselectedLabelColor: context.appColors.textDisabled,
-          tabs: const [
-            Tab(text: '千歳駅'),
-            Tab(text: '南千歳'),
-            Tab(text: '研究棟'),
-            Tab(text: '本部棟'),
+          tabs: [
+            _buildTab('千歳駅', 0, favoriteTabIndex),
+            _buildTab('南千歳', 1, favoriteTabIndex),
+            _buildTab('研究棟', 2, favoriteTabIndex),
+            _buildTab('本部棟', 3, favoriteTabIndex),
           ],
         ),
       ),
