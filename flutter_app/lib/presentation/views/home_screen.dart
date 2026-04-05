@@ -13,6 +13,7 @@ import '../viewmodels/favorite_tab_viewmodel.dart';
 import '../viewmodels/schedule_viewmodel.dart';
 import 'settings_screen.dart';
 import 'widgets/next_bus_display.dart';
+import 'widgets/offline_cache_banner.dart';
 import 'widgets/schedule_list.dart';
 import 'widgets/weekend_warning_banner.dart';
 
@@ -169,13 +170,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             }),
           ],
           scheduleAsync.maybeWhen(
-            data: (r) => r.current.pdfUrl.isNotEmpty
+            data: (r) => r.data.current.pdfUrl.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.open_in_browser,
                         color: AppColors.primary),
                     tooltip: '時刻表原文を開く',
                     onPressed: () => launchUrl(
-                      Uri.parse(r.current.pdfUrl),
+                      Uri.parse(r.data.current.pdfUrl),
                       mode: LaunchMode.externalApplication,
                     ),
                   )
@@ -183,12 +184,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             orElse: () => const SizedBox.shrink(),
           ),
           scheduleAsync.maybeWhen(
-            data: (r) => r.upcoming != null
+            data: (r) => r.data.upcoming != null
                 ? IconButton(
                     icon: const Icon(Icons.calendar_month,
                         color: AppColors.warning),
                     tooltip: '来週のダイヤ',
-                    onPressed: () => _showUpcomingSheet(context, r.upcoming!),
+                    onPressed: () => _showUpcomingSheet(context, r.data.upcoming!),
                   )
                 : const SizedBox.shrink(),
             orElse: () => const SizedBox.shrink(),
@@ -242,14 +243,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ],
               ),
             ),
-            data: (response) {
-              return TabBarView(
-                controller: _tabController,
+            data: (result) {
+              return Column(
                 children: [
-                  _DirectionTab(timetable: response.current, direction: BusDirection.fromChitose, updatedAt: response.updatedAt),
-                  _DirectionTab(timetable: response.current, direction: BusDirection.fromMinamiChitose, updatedAt: response.updatedAt),
-                  _KenkyutoTab(timetable: response.current, updatedAt: response.updatedAt),
-                  _DirectionTab(timetable: response.current, direction: BusDirection.fromHonbuto, updatedAt: response.updatedAt),
+                  if (result.isFromCache)
+                    OfflineCacheBanner(updatedAt: result.data.updatedAt),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _DirectionTab(timetable: result.data.current, direction: BusDirection.fromChitose, updatedAt: result.data.updatedAt),
+                        _DirectionTab(timetable: result.data.current, direction: BusDirection.fromMinamiChitose, updatedAt: result.data.updatedAt),
+                        _KenkyutoTab(timetable: result.data.current, updatedAt: result.data.updatedAt),
+                        _DirectionTab(timetable: result.data.current, direction: BusDirection.fromHonbuto, updatedAt: result.data.updatedAt),
+                      ],
+                    ),
+                  ),
                 ],
               );
             },
