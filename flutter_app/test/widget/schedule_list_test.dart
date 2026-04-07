@@ -9,6 +9,9 @@ import 'package:kagi_bus/presentation/views/widgets/schedule_list.dart';
 
 import '../helpers/test_theme.dart';
 
+// 未来の出発時刻を返す（kTestNow=09:00 の 5分後 = 09:05）
+String get _futureDeparture => safeFutureHhmm(5);
+
 Widget _wrap(Widget child) => ProviderScope(
       overrides: [countdownOverride()],
       child: MaterialApp(theme: buildTestTheme(), home: Scaffold(body: child)),
@@ -429,6 +432,135 @@ void main() {
       await tester.pump();
 
       expect(find.text('研究棟 着'), findsNothing);
+    });
+
+    group('講時タグ', () {
+      testWidgets('arrivals[honbuto]=08:59 → "1講" タグが表示される', (tester) async {
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-03-31',
+          schedules: [
+            BusEntry(
+              time: _futureDeparture,
+              direction: BusDirection.fromChitose,
+              destination: '千歳科技大',
+              arrivals: const {'honbuto': '08:59'},
+            ),
+          ],
+        );
+        await tester.pumpWidget(
+          _wrap(ScheduleList(
+              timetable: timetable, direction: BusDirection.fromChitose)),
+        );
+        expect(find.text('1講'), findsOneWidget);
+      });
+
+      testWidgets('arrivals[honbuto]=09:00 → "2講" タグが表示される（境界値）', (tester) async {
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-03-31',
+          schedules: [
+            BusEntry(
+              time: _futureDeparture,
+              direction: BusDirection.fromChitose,
+              destination: '千歳科技大',
+              arrivals: const {'honbuto': '09:00'},
+            ),
+          ],
+        );
+        await tester.pumpWidget(
+          _wrap(ScheduleList(
+              timetable: timetable, direction: BusDirection.fromChitose)),
+        );
+        expect(find.text('2講'), findsOneWidget);
+      });
+
+      testWidgets('arrivals[honbuto]=16:45 → "放課後" タグが表示される', (tester) async {
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-03-31',
+          schedules: [
+            BusEntry(
+              time: _futureDeparture,
+              direction: BusDirection.fromChitose,
+              destination: '千歳科技大',
+              arrivals: const {'honbuto': '16:45'},
+            ),
+          ],
+        );
+        await tester.pumpWidget(
+          _wrap(ScheduleList(
+              timetable: timetable, direction: BusDirection.fromChitose)),
+        );
+        expect(find.text('放課後'), findsOneWidget);
+      });
+
+      testWidgets('arrivals に honbuto がない方向 → タグが表示されない', (tester) async {
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-03-31',
+          schedules: [
+            BusEntry(
+              time: _futureDeparture,
+              direction: BusDirection.fromKenkyutoToStation,
+              destination: '千歳駅',
+              arrivals: const {'chitose': '09:30'},
+            ),
+          ],
+        );
+        await tester.pumpWidget(
+          _wrap(ScheduleList(
+              timetable: timetable,
+              direction: BusDirection.fromKenkyutoToStation)),
+        );
+        for (final label in ['1講', '2講', '昼休み', '3講', '4講', '5講', '放課後']) {
+          expect(find.text(label), findsNothing);
+        }
+      });
+
+      testWidgets('arrivals が空 → タグが表示されない', (tester) async {
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-03-31',
+          schedules: [
+            BusEntry(
+              time: _futureDeparture,
+              direction: BusDirection.fromChitose,
+              destination: '千歳科技大',
+            ),
+          ],
+        );
+        await tester.pumpWidget(
+          _wrap(ScheduleList(
+              timetable: timetable, direction: BusDirection.fromChitose)),
+        );
+        for (final label in ['1講', '2講', '昼休み', '3講', '4講', '5講', '放課後']) {
+          expect(find.text(label), findsNothing);
+        }
+      });
+
+      testWidgets('isNext=true の行でも講時タグが表示される', (tester) async {
+        final timetable = BusTimetable(
+          validFrom: '2024-01-01',
+          validTo: '2024-03-31',
+          schedules: [
+            BusEntry(
+              time: _futureDeparture,
+              direction: BusDirection.fromChitose,
+              destination: '千歳科技大',
+              arrivals: const {'honbuto': '10:00'},
+            ),
+          ],
+        );
+        await tester.pumpWidget(
+          _wrap(ScheduleList(
+              timetable: timetable, direction: BusDirection.fromChitose)),
+        );
+        // NEXT行であることを確認
+        expect(find.text('◀ NEXT'), findsOneWidget);
+        // 講時タグも表示されている
+        expect(find.text('2講'), findsOneWidget);
+      });
     });
 
     testWidgets('NEXTバスが画面外にあっても初期表示でスクロールされて見える', (tester) async {
