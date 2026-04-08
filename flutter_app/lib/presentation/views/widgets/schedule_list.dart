@@ -165,20 +165,18 @@ class _ScheduleRowState extends ConsumerState<_ScheduleRow> {
   List<Widget> _buildLectureTagWidgets() {
     final period = LecturePeriodCalculator.forBus(widget.bus);
     if (period == null) return const [];
-    final colors = context.appColors;
+    final color = _lectureTagColor(period);
     return [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
         decoration: BoxDecoration(
-          border: Border.all(
-            color: widget.isNext ? AppColors.onPrimary : colors.textTertiary,
-          ),
+          border: Border.all(color: color),
           borderRadius: BorderRadius.circular(3),
         ),
         child: Text(
           period.label,
           style: TextStyle(
-            color: widget.isNext ? AppColors.onPrimary : colors.textTertiary,
+            color: color,
             fontSize: 10,
             letterSpacing: 0.5,
           ),
@@ -187,6 +185,16 @@ class _ScheduleRowState extends ConsumerState<_ScheduleRow> {
       const SizedBox(width: 8),
     ];
   }
+
+  static Color _lectureTagColor(LecturePeriod period) => switch (period) {
+        LecturePeriod.period1    => const Color(0xFF64B5F6), // 青（朝）
+        LecturePeriod.period2    => const Color(0xFF4DD0E1), // シアン
+        LecturePeriod.lunchBreak => const Color(0xFFFFD54F), // 黄（昼）
+        LecturePeriod.period3    => const Color(0xFF81C784), // 緑
+        LecturePeriod.period4    => const Color(0xFFFFB74D), // オレンジ
+        LecturePeriod.period5    => const Color(0xFFFF8A65), // 深オレンジ
+        LecturePeriod.afterSchool => const Color(0xFFCE93D8), // 紫
+      };
 
   Widget _buildBellIcon() {
     if (widget.isPast) return const SizedBox.shrink();
