@@ -48,8 +48,10 @@ android {
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
         }
         release {
-            manifestPlaceholders["admobAppId"] = System.getenv("ADMOB_ANDROID_APP_ID")
-                ?: "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX"
+            val admobAndroidAppId = System.getenv("ADMOB_ANDROID_APP_ID")
+                ?.takeIf { it.isNotEmpty() }
+                ?: throw GradleException("ADMOB_ANDROID_APP_ID is not set. Set it as an environment variable or GitHub Secret.")
+            manifestPlaceholders["admobAppId"] = admobAndroidAppId
             signingConfig = if (keystorePath != null) {
                 signingConfigs.getByName("release")
             } else {
