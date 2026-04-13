@@ -453,6 +453,9 @@ class _KenkyutoTabState extends State<_KenkyutoTab> {
               const SizedBox(height: 8),
               // IndexedStack で両方向の NextBusDisplay を常時保持し、
               // 本部棟↔千歳駅切り替え時のレイアウトガタつきを防ぐ。
+              // onVerticalDragUpdate を指定することで VerticalDragGestureRecognizer が
+              // ジェスチャーアリーナに参加し、縦スワイプをここで消費する。
+              // これにより TabBarView（PageView）への伝播を防ぐ。
               GestureDetector(
                 onVerticalDragUpdate: (_) {},
                 child: IndexedStack(
@@ -537,6 +540,9 @@ class _DirectionTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
+              // onVerticalDragUpdate を指定することで VerticalDragGestureRecognizer が
+              // ジェスチャーアリーナに参加し、縦スワイプをここで消費する。
+              // これにより TabBarView（PageView）への伝播を防ぐ。
               GestureDetector(
                 onVerticalDragUpdate: (_) {},
                 child: NextBusDisplay(
