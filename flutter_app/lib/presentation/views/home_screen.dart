@@ -453,12 +453,15 @@ class _KenkyutoTabState extends State<_KenkyutoTab> {
               const SizedBox(height: 8),
               // IndexedStack で両方向の NextBusDisplay を常時保持し、
               // 本部棟↔千歳駅切り替え時のレイアウトガタつきを防ぐ。
-              IndexedStack(
-                index: _direction == BusDirection.fromKenkyutoToHonbuto ? 0 : 1,
-                children: [
-                  NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToHonbuto),
-                  NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToStation),
-                ],
+              GestureDetector(
+                onVerticalDragUpdate: (_) {},
+                child: IndexedStack(
+                  index: _direction == BusDirection.fromKenkyutoToHonbuto ? 0 : 1,
+                  children: [
+                    NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToHonbuto),
+                    NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToStation),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               Text("TODAY'S SCHEDULE", style: TextStyle(color: context.appColors.textTertiary, fontSize: 12, letterSpacing: 3)),
@@ -534,10 +537,13 @@ class _DirectionTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              NextBusDisplay(
-                timetable: timetable,
-                direction: direction,
-                showPlatform: direction == BusDirection.fromChitose,
+              GestureDetector(
+                onVerticalDragUpdate: (_) {},
+                child: NextBusDisplay(
+                  timetable: timetable,
+                  direction: direction,
+                  showPlatform: direction == BusDirection.fromChitose,
+                ),
               ),
               const SizedBox(height: 24),
               Text(
