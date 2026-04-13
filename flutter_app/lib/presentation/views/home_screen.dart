@@ -13,6 +13,7 @@ import '../viewmodels/favorite_tab_viewmodel.dart';
 import '../viewmodels/schedule_viewmodel.dart';
 import 'settings_screen.dart';
 import 'widgets/next_bus_display.dart';
+import 'widgets/offline_cache_banner.dart';
 import 'widgets/schedule_list.dart';
 import 'widgets/weekend_warning_banner.dart';
 
@@ -169,13 +170,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             }),
           ],
           scheduleAsync.maybeWhen(
-            data: (r) => r.current.pdfUrl.isNotEmpty
+            data: (r) => r.data.current.pdfUrl.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.open_in_browser,
                         color: AppColors.primary),
                     tooltip: '時刻表原文を開く',
                     onPressed: () => launchUrl(
-                      Uri.parse(r.current.pdfUrl),
+                      Uri.parse(r.data.current.pdfUrl),
                       mode: LaunchMode.externalApplication,
                     ),
                   )
@@ -183,12 +184,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             orElse: () => const SizedBox.shrink(),
           ),
           scheduleAsync.maybeWhen(
-            data: (r) => r.upcoming != null
+            data: (r) => r.data.upcoming != null
                 ? IconButton(
                     icon: const Icon(Icons.calendar_month,
                         color: AppColors.warning),
                     tooltip: '来週のダイヤ',
-                    onPressed: () => _showUpcomingSheet(context, r.upcoming!),
+                    onPressed: () => _showUpcomingSheet(context, r.data.upcoming!),
                   )
                 : const SizedBox.shrink(),
             orElse: () => const SizedBox.shrink(),
@@ -242,14 +243,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ],
               ),
             ),
-            data: (response) {
-              return TabBarView(
-                controller: _tabController,
+            data: (result) {
+              return Column(
                 children: [
-                  _DirectionTab(timetable: response.current, direction: BusDirection.fromChitose, updatedAt: response.updatedAt),
-                  _DirectionTab(timetable: response.current, direction: BusDirection.fromMinamiChitose, updatedAt: response.updatedAt),
-                  _KenkyutoTab(timetable: response.current, updatedAt: response.updatedAt),
-                  _DirectionTab(timetable: response.current, direction: BusDirection.fromHonbuto, updatedAt: response.updatedAt),
+                  if (result.isFromCache)
+                    OfflineCacheBanner(updatedAt: result.data.updatedAt),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _DirectionTab(timetable: result.data.current, direction: BusDirection.fromChitose, updatedAt: result.data.updatedAt),
+                        _DirectionTab(timetable: result.data.current, direction: BusDirection.fromMinamiChitose, updatedAt: result.data.updatedAt),
+                        _KenkyutoTab(timetable: result.data.current, updatedAt: result.data.updatedAt),
+                        _DirectionTab(timetable: result.data.current, direction: BusDirection.fromHonbuto, updatedAt: result.data.updatedAt),
+                      ],
+                    ),
+                  ),
                 ],
               );
             },
@@ -444,12 +453,18 @@ class _KenkyutoTabState extends State<_KenkyutoTab> {
               const SizedBox(height: 8),
               // IndexedStack で両方向の NextBusDisplay を常時保持し、
               // 本部棟↔千歳駅切り替え時のレイアウトガタつきを防ぐ。
-              IndexedStack(
-                index: _direction == BusDirection.fromKenkyutoToHonbuto ? 0 : 1,
-                children: [
-                  NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToHonbuto),
-                  NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToStation),
-                ],
+              // onVerticalDragUpdate を指定することで VerticalDragGestureRecognizer が
+              // ジェスチャーアリーナに参加し、縦スワイプをここで消費する。
+              // これにより TabBarView（PageView）への伝播を防ぐ。
+              GestureDetector(
+                onVerticalDragUpdate: (_) {},
+                child: IndexedStack(
+                  index: _direction == BusDirection.fromKenkyutoToHonbuto ? 0 : 1,
+                  children: [
+                    NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToHonbuto),
+                    NextBusDisplay(timetable: widget.timetable, direction: BusDirection.fromKenkyutoToStation),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               Text("TODAY'S SCHEDULE", style: TextStyle(color: context.appColors.textTertiary, fontSize: 12, letterSpacing: 3)),
@@ -460,21 +475,27 @@ class _KenkyutoTabState extends State<_KenkyutoTab> {
         // IndexedStack で両 ScheduleList の State を常時保持することで
         // 本部棟↔千歳駅切り替え時にスクロール位置が独立して維持される。
         // PageStorageKey でスクロール位置を方向ごとに永続化する。
+        // onVerticalDragUpdate を指定することで VerticalDragGestureRecognizer が
+        // ジェスチャーアリーナに参加し、スクロール不可時の縦スワイプを消費する。
+        // これにより TabBarView（PageView）への伝播を防ぐ。
         Expanded(
-          child: IndexedStack(
-            index: _direction == BusDirection.fromKenkyutoToHonbuto ? 0 : 1,
-            children: [
-              ScheduleList(
-                key: const PageStorageKey('kenkyuto_honbuto'),
-                timetable: widget.timetable,
-                direction: BusDirection.fromKenkyutoToHonbuto,
-              ),
-              ScheduleList(
-                key: const PageStorageKey('kenkyuto_chitose'),
-                timetable: widget.timetable,
-                direction: BusDirection.fromKenkyutoToStation,
-              ),
-            ],
+          child: GestureDetector(
+            onVerticalDragUpdate: (_) {},
+            child: IndexedStack(
+              index: _direction == BusDirection.fromKenkyutoToHonbuto ? 0 : 1,
+              children: [
+                ScheduleList(
+                  key: const PageStorageKey('kenkyuto_honbuto'),
+                  timetable: widget.timetable,
+                  direction: BusDirection.fromKenkyutoToHonbuto,
+                ),
+                ScheduleList(
+                  key: const PageStorageKey('kenkyuto_chitose'),
+                  timetable: widget.timetable,
+                  direction: BusDirection.fromKenkyutoToStation,
+                ),
+              ],
+            ),
           ),
         ),
         Padding(
@@ -525,10 +546,16 @@ class _DirectionTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              NextBusDisplay(
-                timetable: timetable,
-                direction: direction,
-                showPlatform: direction == BusDirection.fromChitose,
+              // onVerticalDragUpdate を指定することで VerticalDragGestureRecognizer が
+              // ジェスチャーアリーナに参加し、縦スワイプをここで消費する。
+              // これにより TabBarView（PageView）への伝播を防ぐ。
+              GestureDetector(
+                onVerticalDragUpdate: (_) {},
+                child: NextBusDisplay(
+                  timetable: timetable,
+                  direction: direction,
+                  showPlatform: direction == BusDirection.fromChitose,
+                ),
               ),
               const SizedBox(height: 24),
               Text(
@@ -543,8 +570,14 @@ class _DirectionTab extends StatelessWidget {
             ],
           ),
         ),
+        // onVerticalDragUpdate を指定することで VerticalDragGestureRecognizer が
+        // ジェスチャーアリーナに参加し、スクロール不可時の縦スワイプを消費する。
+        // これにより TabBarView（PageView）への伝播を防ぐ。
         Expanded(
-          child: ScheduleList(timetable: timetable, direction: direction),
+          child: GestureDetector(
+            onVerticalDragUpdate: (_) {},
+            child: ScheduleList(timetable: timetable, direction: direction),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),

@@ -6,8 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kagi_bus/domain/entities/bus_schedule.dart';
 import 'package:kagi_bus/domain/entities/favorite_tab.dart';
 import 'package:kagi_bus/presentation/viewmodels/favorite_tab_viewmodel.dart';
+import 'package:kagi_bus/presentation/viewmodels/schedule_result.dart';
 import 'package:kagi_bus/presentation/viewmodels/schedule_viewmodel.dart';
 import 'package:kagi_bus/presentation/views/home_screen.dart';
+import 'package:kagi_bus/presentation/views/widgets/offline_cache_banner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/test_theme.dart';
@@ -17,13 +19,13 @@ import '../helpers/test_theme.dart';
 // ---------------------------------------------------------------------------
 
 class _FakeScheduleViewModel extends ScheduleViewModel {
-  _FakeScheduleViewModel(this._response);
+  _FakeScheduleViewModel(this._result);
 
-  final ScheduleResponse _response;
+  final ScheduleResult _result;
   bool refreshCalled = false;
 
   @override
-  Future<ScheduleResponse> build() async => _response;
+  Future<ScheduleResult> build() async => _result;
 
   @override
   Future<void> refresh() async {
@@ -33,7 +35,7 @@ class _FakeScheduleViewModel extends ScheduleViewModel {
 
 class _LoadingViewModel extends ScheduleViewModel {
   @override
-  Future<ScheduleResponse> build() async {
+  Future<ScheduleResult> build() async {
     // Never completes → keeps state as AsyncLoading
     await Completer<void>().future;
     throw Exception('unreachable');
@@ -45,7 +47,7 @@ class _ErrorViewModel extends ScheduleViewModel {
   final Object _error;
 
   @override
-  Future<ScheduleResponse> build() async => throw _error;
+  Future<ScheduleResult> build() async => throw _error;
 }
 
 class _FakeFavoriteTabNotifier extends FavoriteTabNotifier {
@@ -74,7 +76,7 @@ class _TrackingErrorViewModel extends ScheduleViewModel {
   bool refreshCalled = false;
 
   @override
-  Future<ScheduleResponse> build() async => throw Exception('test error');
+  Future<ScheduleResult> build() async => throw Exception('test error');
 
   @override
   Future<void> refresh() async {
@@ -92,18 +94,22 @@ final _emptyTimetable = BusTimetable(
   schedules: const [],
 );
 
-final _mockResponse = ScheduleResponse(
-  updatedAt: '2024-01-01',
-  current: _emptyTimetable,
+final _mockResponse = ScheduleResult(
+  data: ScheduleResponse(
+    updatedAt: '2024-01-01',
+    current: _emptyTimetable,
+  ),
 );
 
-final _mockResponseWithUpcoming = ScheduleResponse(
-  updatedAt: '2024-01-01',
-  current: _emptyTimetable,
-  upcoming: BusTimetable(
-    validFrom: '2024-04-01',
-    validTo: '2024-06-30',
-    schedules: const [],
+final _mockResponseWithUpcoming = ScheduleResult(
+  data: ScheduleResponse(
+    updatedAt: '2024-01-01',
+    current: _emptyTimetable,
+    upcoming: BusTimetable(
+      validFrom: '2024-04-01',
+      validTo: '2024-06-30',
+      schedules: const [],
+    ),
   ),
 );
 
@@ -369,6 +375,50 @@ void main() {
         await tester.pump();
 
         expect(favNotifier.lastToggleIndex, equals(2));
+      });
+    });
+
+    group('OfflineCacheBanner', () {
+      testWidgets('isFromCache: true のとき OfflineCacheBanner が表示される',
+          (tester) async {
+        final cachedResult = ScheduleResult(
+          data: ScheduleResponse(
+            updatedAt: '2024-01-01',
+            current: _emptyTimetable,
+          ),
+          isFromCache: true,
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              scheduleViewModelProvider
+                  .overrideWith(() => _FakeScheduleViewModel(cachedResult)),
+              countdownOverride(),
+            ],
+            child: MaterialApp(theme: buildTestTheme(), home: const HomeScreen()),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(OfflineCacheBanner), findsOneWidget);
+        expect(find.textContaining('キャッシュデータを表示中'), findsOneWidget);
+      });
+
+      testWidgets('isFromCache: false のとき OfflineCacheBanner が表示されない',
+          (tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              scheduleViewModelProvider
+                  .overrideWith(() => _FakeScheduleViewModel(_mockResponse)),
+              countdownOverride(),
+            ],
+            child: MaterialApp(theme: buildTestTheme(), home: const HomeScreen()),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(OfflineCacheBanner), findsNothing);
       });
     });
   });
